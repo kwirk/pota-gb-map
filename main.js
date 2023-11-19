@@ -203,6 +203,12 @@ function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, v
   });
 }
 
+class EsriJSONObjectID extends EsriJSON {
+  readFeatureFromObject(object, options, idField) {
+    return super.readFeatureFromObject(object, options, 'OBJECTID');
+  }
+}
+
 const apiKey = import.meta.env.VITE_OS_APIKEY;
 const parser = new WMTSCapabilities();
 fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=GetCapabilities&version=2.0.0`)
@@ -277,7 +283,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
               source: new VectorSource({
                 attributions: '<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>',
                 projection: projection27700,
-                format: new EsriJSON(),
+                format: new EsriJSONObjectID(),
                 strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
                 url: (extent) => 'https://maps.gov.scot/server/services/ScotGov/ProtectedSites/MapServer/WFSServer?service=WFS&'
                     + 'typeName=PS:NationalScenicAreas&outputFormat=ESRIGEOJSON&version=2.0.0&'
