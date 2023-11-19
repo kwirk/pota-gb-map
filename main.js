@@ -46,6 +46,12 @@ const GeoJSON27700 = new GeoJSON({
   featureProjection: projection27700,
 });
 
+class EsriJSONObjectID extends EsriJSON {
+  readFeatureFromObject(object, options) {
+    return super.readFeatureFromObject(object, options, 'OBJECTID');
+  }
+}
+
 // Styles
 function createTextStyle(feature, resolution, text, color) {
   return new Text({
@@ -159,6 +165,18 @@ function polygonStyleFunctionRSPB(feature, resolution) {
   return polygonStyleFunction(feature, resolution, text, 'rgba(76, 0, 126, 1)');
 }
 
+const colorNP = 'rgba(0, 102, 0, 1)';
+function polygonStyleFunctionNP(feature, resolution) {
+  let text = feature.get('NPName');
+  if (text === undefined) {
+    text = feature.get('np_name');
+  }
+  if (text === undefined) {
+    text = feature.get('name');
+  }
+  return polygonStyleFunction(feature, resolution, text, colorNP);
+}
+
 function createVectorLayer(stylefunc, url, extentCountry) {
   return new VectorLayer({
     minZoom: 6,
@@ -170,6 +188,23 @@ function createVectorLayer(stylefunc, url, extentCountry) {
       format: GeoJSON27700,
       strategy: (extent) => (intersects(extent, extentCountry) ? [extent] : []),
       url: (extent) => `${url}version=2.0.0&request=GetFeature&outputFormat=application/json&srsname=EPSG:27700&bbox=${extent}`,
+    }),
+  });
+}
+
+function createVectorLayerScotGov(stylefunc, layer) {
+  return new VectorLayer({
+    minZoom: 6,
+    extent: extentScotland,
+    style: stylefunc,
+    source: new VectorSource({
+      attributions: '<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>',
+      projection: projection27700,
+      format: new EsriJSONObjectID(),
+      strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
+      url: (extent) => 'https://maps.gov.scot/server/services/ScotGov/ProtectedSites/MapServer/WFSServer?service=WFS&'
+          + `typeName=${layer}&outputFormat=ESRIGEOJSON&version=2.0.0&`
+          + `request=GetFeature&srsname=EPSG%3A27700&bbox=${extent}`,
     }),
   });
 }
@@ -201,12 +236,6 @@ function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, v
     visible: visible,
     layers: layers,
   });
-}
-
-class EsriJSONObjectID extends EsriJSON {
-  readFeatureFromObject(object, options, idField) {
-    return super.readFeatureFromObject(object, options, 'OBJECTID');
-  }
 }
 
 const apiKey = import.meta.env.VITE_OS_APIKEY;
@@ -276,20 +305,25 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           combine: true,
           visible: false,
           layers: [
-            new VectorLayer({
-              minZoom: 6,
-              extent: extentScotland,
-              style: polygonStyleFunctionNSA,
-              source: new VectorSource({
-                attributions: '<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>',
-                projection: projection27700,
-                format: new EsriJSONObjectID(),
-                strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
-                url: (extent) => 'https://maps.gov.scot/server/services/ScotGov/ProtectedSites/MapServer/WFSServer?service=WFS&'
-                    + 'typeName=PS:NationalScenicAreas&outputFormat=ESRIGEOJSON&version=2.0.0&'
-                    + `request=GetFeature&srsname=EPSG%3A27700&bbox=${extent}`,
-              }),
-            }),
+            createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendBox(colorNP)} National Parks`,
+          combine: true,
+          visible: false,
+          layers: [
+            vectorLayerEngland(
+              polygonStyleFunctionNP,
+              'https://environment.data.gov.uk/spatialdata/national-parks-england/wfs?service=WFS&'
+              + 'typeName=dataset-e819098e-e248-4a8f-b684-5a21ca521b9b:National_Parks_England&',
+            ),
+            vectorLayerWales(
+              polygonStyleFunctionNP,
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
+            ),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
           ],
         }),
         createLayerGroup(
