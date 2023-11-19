@@ -339,6 +339,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           minZoom: 6,
           style: pointStyleFunction,
           source: new VectorSource({
+            attributions: '<a href="https://parksontheair.com/" target="_blank">Parks on the Air®.</a>',
             strategy: bboxStrategy,
             url: (extent) => {
               let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
