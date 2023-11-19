@@ -73,6 +73,14 @@ function pointStyleFunction(feature, resolution) {
   });
 }
 
+function colorOpacity(color) {
+  return color.replace(/[\d.]+\)$/g, '0.2)');
+}
+
+function legendBox(color) {
+  return `<div class="box" style="background-color: ${colorOpacity(color)}; border-color: ${color}"></div>`;
+}
+
 function polygonStyleFunction(feature, resolution, text, color) {
   return new Style({
     stroke: new Stroke({
@@ -80,20 +88,22 @@ function polygonStyleFunction(feature, resolution, text, color) {
       width: 3,
     }),
     fill: new Fill({
-      color: color.replace(/[\d.]+\)$/g, '0.2)'),
+      color: colorOpacity(color),
     }),
     text: createTextStyle(feature, resolution, text, color),
   });
 }
 
+const colorSSSI = 'rgba(0, 246, 171, 1)';
 function polygonStyleFunctionSSSI(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
     text = feature.get('sssi_name');
   }
-  return polygonStyleFunction(feature, resolution, text, 'rgba(0, 246, 171, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorSSSI);
 }
 
+const colorNNR = 'rgba(164, 180, 0, 1)';
 function polygonStyleFunctionNNR(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
@@ -102,9 +112,10 @@ function polygonStyleFunctionNNR(feature, resolution) {
   if (text === undefined) {
     text = feature.get('nnr_name');
   }
-  return polygonStyleFunction(feature, resolution, text, 'rgba(164, 180, 0, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorNNR);
 }
 
+const colorCPK = 'rgba(255, 180, 0, 1)';
 function polygonStyleFunctionCPK(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
@@ -113,22 +124,24 @@ function polygonStyleFunctionCPK(feature, resolution) {
   if (text === undefined) {
     text = feature.get('name');
   }
-  return polygonStyleFunction(feature, resolution, text, 'rgba(255, 180, 0, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorCPK);
 }
 
+const colorAONB = 'rgba(247, 0, 0, 1)';
 function polygonStyleFunctionAONB(feature, resolution) {
   let text = feature.get('AONB_NAME');
   if (text === undefined) {
     text = feature.get('name');
   }
-  return polygonStyleFunction(feature, resolution, text, 'rgba(247, 0, 0, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorAONB);
 }
 
 function polygonStyleFunctionNSA(feature, resolution) {
   const text = feature.get('NSAName');
-  return polygonStyleFunction(feature, resolution, text, 'rgba(247, 0, 0, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorAONB);
 }
 
+const colorSAC = 'rgba(126, 0, 76, 1)';
 function polygonStyleFunctionSAC(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
@@ -137,17 +150,17 @@ function polygonStyleFunctionSAC(feature, resolution) {
   if (text === undefined) {
     text = feature.get('sac_name');
   }
-  return polygonStyleFunction(feature, resolution, text, 'rgba(126, 0, 76, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorSAC);
 }
 
+const colorRSPB = 'rgba(76, 0, 126, 1)';
 function polygonStyleFunctionRSPB(feature, resolution) {
   const text = feature.get('Name');
   return polygonStyleFunction(feature, resolution, text, 'rgba(76, 0, 126, 1)');
 }
 
-function createVectorLayer(title, stylefunc, url, extentCountry) {
+function createVectorLayer(stylefunc, url, extentCountry) {
   return new VectorLayer({
-    title: title,
     minZoom: 6,
     extent: extentCountry,
     style: stylefunc,
@@ -161,26 +174,26 @@ function createVectorLayer(title, stylefunc, url, extentCountry) {
   });
 }
 
-function vectorLayerEngland(title, stylefunc, url) {
-  return createVectorLayer(`${title} - England`, stylefunc, url, extentEngland);
+function vectorLayerEngland(stylefunc, url) {
+  return createVectorLayer(stylefunc, url, extentEngland);
 }
-function vectorLayerScotland(title, stylefunc, url) {
-  return createVectorLayer(`${title} - Scotland`, stylefunc, url, extentScotland);
+function vectorLayerScotland(stylefunc, url) {
+  return createVectorLayer(stylefunc, url, extentScotland);
 }
-function vectorLayerWales(title, stylefunc, url) {
-  return createVectorLayer(`${title} - Wales`, stylefunc, url, extentWales);
+function vectorLayerWales(stylefunc, url) {
+  return createVectorLayer(stylefunc, url, extentWales);
 }
 
 function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, visible = true) {
   const layers = [];
   if (urlEngland) {
-    layers.push(vectorLayerEngland(title, stylefunc, urlEngland));
+    layers.push(vectorLayerEngland(stylefunc, urlEngland));
   }
   if (urlScotland) {
-    layers.push(vectorLayerScotland(title, stylefunc, urlScotland));
+    layers.push(vectorLayerScotland(stylefunc, urlScotland));
   }
   if (urlWales) {
-    layers.push(vectorLayerWales(title, stylefunc, urlWales));
+    layers.push(vectorLayerWales(stylefunc, urlWales));
   }
   return new LayerGroup({
     title: title,
@@ -215,15 +228,6 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         new TileLayer({
           source: baseSource,
         }),
-        createLayerGroup(
-          'Areas of Outstanding Natural Beauty',
-          polygonStyleFunctionAONB,
-          'https://environment.data.gov.uk/spatialdata/areas-of-outstanding-natural-beauty-england/wfs?service=WFS&'
-            + 'typeName=dataset-0c1ea47f-3c79-47f0-b0ed-094e0a136971:Areas_of_Outstanding_Natural_Beauty_England&',
-          null, // National Scenic Areas below
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
-          false,
-        ),
         new VectorLayer({
           maxZoom: 6,
           style: new Style({
@@ -252,13 +256,21 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             },
           }),
         }),
+        createLayerGroup(
+          `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
+          polygonStyleFunctionAONB,
+          'https://environment.data.gov.uk/spatialdata/areas-of-outstanding-natural-beauty-england/wfs?service=WFS&'
+            + 'typeName=dataset-0c1ea47f-3c79-47f0-b0ed-094e0a136971:Areas_of_Outstanding_Natural_Beauty_England&',
+          null, // National Scenic Areas below
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
+          false,
+        ),
         new LayerGroup({
-          title: 'National Scenic Areas',
+          title: `${legendBox(colorAONB)} National Scenic Areas`,
           combine: true,
           visible: false,
           layers: [
             new VectorLayer({
-              title: 'National Scenic Areas - Scotland',
               minZoom: 6,
               extent: extentScotland,
               style: polygonStyleFunctionNSA,
@@ -275,7 +287,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           ],
         }),
         createLayerGroup(
-          'Special Sites of Scientific Interest',
+          `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
           polygonStyleFunctionSSSI,
           'https://environment.data.gov.uk/spatialdata/sites-of-special-scientific-interest-england/wfs?service=WFS&'
             + 'typeName=dataset-ba8dc201-66ef-4983-9d46-7378af21027e:Sites_of_Special_Scientific_Interest_England&',
@@ -284,7 +296,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           false,
         ),
         createLayerGroup(
-          'Special Areas of Conservation',
+          `${legendBox(colorSAC)} Special Areas of Conservation`,
           polygonStyleFunctionSAC,
           'https://environment.data.gov.uk/spatialdata/special-areas-of-conservation-england/wfs?service=WFS&'
             + 'typeName=dataset-6ecea2a1-5d2e-4f53-ba1f-690f4046ed1c:Special_Areas_of_Conservation_England&',
@@ -293,7 +305,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           false,
         ),
         createLayerGroup(
-          'Country Parks',
+          `${legendBox(colorCPK)} Country Parks`,
           polygonStyleFunctionCPK,
           'https://environment.data.gov.uk/spatialdata/country-parks-england/wfs?service=WFS&'
             + 'typeName=dataset-697b86c9-5dce-4b60-9241-e590bf1d3a99:Country_Parks_England&',
@@ -301,7 +313,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
         ),
         createLayerGroup(
-          'National Nature Reserves',
+          `${legendBox(colorNNR)} National Nature Reserves`,
           polygonStyleFunctionNNR,
           'https://environment.data.gov.uk/spatialdata/national-nature-reserves-england/wfs?service=WFS&'
             + 'typeName=dataset-ff213e4c-423a-4d7e-9e6f-b220600a8db3:National_Nature_Reserves_England&',
@@ -309,11 +321,10 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
         ),
         new LayerGroup({
-          title: 'RSPB Reserves',
+          title: `${legendBox(colorRSPB)} RSPB Reserves`,
           combine: true,
           layers: [
             new VectorLayer({
-              title: 'RSPB Reserves',
               minZoom: 6,
               style: polygonStyleFunctionRSPB,
               source: new VectorSource({
