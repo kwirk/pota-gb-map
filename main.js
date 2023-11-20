@@ -7,6 +7,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
+import OSM from 'ol/source/OSM';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import Projection from 'ol/proj/Projection';
@@ -260,8 +261,21 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         maxZoom: 11, // Max of OS API Free
       }),
       layers: [
-        new TileLayer({
-          source: baseSource,
+        new LayerGroup({
+          title: 'Base maps',
+          layers: [
+            new TileLayer({
+              title: 'Ordnance Survey',
+              type: 'base',
+              source: baseSource,
+            }),
+            new TileLayer({
+              title: 'OSM',
+              type: 'base',
+              source: new OSM(),
+              visible: false,
+            }),
+          ],
         }),
         new VectorLayer({
           maxZoom: 6,
