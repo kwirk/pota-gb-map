@@ -13,4 +13,4 @@ Currently limited to Great Britain (England, Scotland and Wales), but looking to
 ## License
 Copyright (C) 2023 Steven Hiscocks (M1SDH)
 
-Redistribution and use in source and binary forms, with or without modification, are permitted under the [Simplified BSD License](LICENSE.md).
+Redistribution and use in source and binary forms, with or without modification, are permitted under the [2-Clause BSD License](LICENSE.md).
