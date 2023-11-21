@@ -184,7 +184,7 @@ function createVectorLayer(stylefunc, url, extentCountry) {
     extent: extentCountry,
     style: stylefunc,
     source: new VectorSource({
-      attributions: '<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>',
+      attributions: 'Boundaries:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>',
       projection: projection27700,
       format: GeoJSON27700,
       strategy: (extent) => (intersects(extent, extentCountry) ? [extent] : []),
@@ -199,7 +199,7 @@ function createVectorLayerScotGov(stylefunc, layer) {
     extent: extentScotland,
     style: stylefunc,
     source: new VectorSource({
-      attributions: '<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>',
+      attributions: 'Boundaries:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>',
       projection: projection27700,
       format: new EsriJSONObjectID(),
       strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
@@ -251,7 +251,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
     });
 
     const baseSource = new WMTS(options);
-    baseSource.setAttributions('<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence.</a>');
+    baseSource.setAttributions('Map:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>');
     const map = new Map({
       target: 'map',
       view: new View({
@@ -272,8 +272,10 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             new TileLayer({
               title: 'OSM',
               type: 'base',
-              source: new OSM(),
               visible: false,
+              source: new OSM({
+                attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
+              }),
             }),
           ],
         }),
@@ -288,7 +290,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             }),
           }),
           source: new VectorSource({
-            attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed by Steven Hiscocks M1SDH.</a>',
+            attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed&nbsp;by&nbsp;Steven&nbsp;Hiscocks&nbsp;M1SDH.</a>',
             projection: projection27700,
             format: GeoJSON27700,
             strategy: bboxStrategy,
@@ -382,7 +384,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
               minZoom: 6,
               style: polygonStyleFunctionRSPB,
               source: new VectorSource({
-                attributions: 'RSPB Geographic Data End User Agreement.',
+                attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
                 format: new EsriJSON(),
                 projection: projection27700,
                 strategy: bboxStrategy,
@@ -404,7 +406,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           minZoom: 6,
           style: pointStyleFunction,
           source: new VectorSource({
-            attributions: '<a href="https://parksontheair.com/" target="_blank">Parks on the Air®.</a>',
+            attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
             strategy: bboxStrategy,
             url: (extent) => {
               let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
