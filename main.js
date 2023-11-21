@@ -8,6 +8,7 @@ import VectorSource from 'ol/source/Vector';
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import Projection from 'ol/proj/Projection';
@@ -275,6 +276,16 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
               visible: false,
               source: new OSM({
                 attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
+              }),
+            }),
+            new TileLayer({
+              title: 'OpenTopoMap',
+              type: 'base',
+              visible: false,
+              source: new XYZ({
+                attributions: 'Map&nbsp;data:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors,&nbsp;SRTM. '
+                 + 'Map&nbsp;display:&nbsp;©<a href="http://opentopomap.org" target="_blank">OpenTopoMap</a>&nbsp;(<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>).',
+                url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
               }),
             }),
           ],
