@@ -29,6 +29,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Control from 'ol/control/Control';
 import LayerSwitcher from 'ol-layerswitcher';
+import osgridGeoJSON from './OSGB_Grid_10km.geojson?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -318,6 +319,37 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             },
           }),
         }),
+        new LayerGroup({
+          title: 'Overlays',
+          minZoom: 6,
+          visible: false,
+          layers: [
+            new VectorLayer({
+              title: 'OS Grid (WAB Squares)',
+              visible: false,
+              style: function style(feature) {
+                return new Style({
+                  stroke: new Stroke({
+                    color: 'rgba(100, 100, 100, 0.2)',
+                    width: 3,
+                  }),
+                  text: new Text({
+                    text: feature.get('grid'),
+                    font: '30px bold ui-rounded',
+                    stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
+                    fill: null,
+                  }),
+                });
+              },
+              source: new VectorSource({
+                format: new GeoJSON({featureProjection: projection27700}),
+                projection: projection27700,
+                overlaps: false,
+                url: osgridGeoJSON,
+              }),
+            }),
+          ],
+        }),
         createLayerGroup(
           `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
           polygonStyleFunctionAONB,
@@ -486,7 +518,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
 
     const layerSwitcher = new LayerSwitcher({
       reverse: true,
-      groupSelectStyle: 'group',
+      groupSelectStyle: 'none',
       startActive: true,
     });
     map.addControl(layerSwitcher);
