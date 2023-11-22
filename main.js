@@ -177,6 +177,18 @@ function polygonStyleFunctionSAC(feature, resolution) {
   return polygonStyleFunction(feature, resolution, text, colorSAC);
 }
 
+const colorSPA = 'rgba(200, 100, 50, 1)';
+function polygonStyleFunctionSPA(feature, resolution) {
+  let text = feature.get('NAME');
+  if (text === undefined) {
+    text = feature.get('SPA_Name');
+  }
+  if (text === undefined) {
+    text = feature.get('spa_name');
+  }
+  return polygonStyleFunction(feature, resolution, text, colorSPA);
+}
+
 const colorRSPB = 'rgba(76, 0, 126, 1)';
 function polygonStyleFunctionRSPB(feature, resolution) {
   const text = feature.get('Name');
@@ -441,6 +453,15 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             + 'typeName=dataset-6ecea2a1-5d2e-4f53-ba1f-690f4046ed1c:Special_Areas_of_Conservation_England&',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
+          false,
+        ),
+        createLayerGroup(
+          `${legendBox(colorSPA)} Special Protection Areas`,
+          polygonStyleFunctionSPA,
+          'https://environment.data.gov.uk/spatialdata/special-protection-areas-england/wfs?service=WFS&'
+            + 'typeName=dataset-4c660eee-887e-4c8b-91e5-d84b4c1078ac:Special_Protection_Areas_England&',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
           false,
         ),
         createLayerGroup(
