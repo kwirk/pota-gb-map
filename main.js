@@ -79,6 +79,7 @@ function createTextStyle(feature, resolution, text, color) {
     fill: new Fill({color: '#000000'}),
     stroke: new Stroke({color: color, width: 1}),
     offsetY: 15,
+    overflow: (resolution < 15),
   });
 }
 
