@@ -24,12 +24,11 @@ import {
   Style,
   Text,
 } from 'ol/style';
-import {circular} from 'ol/geom/Polygon';
+import Polygon, {circular} from 'ol/geom/Polygon';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Control from 'ol/control/Control';
 import LayerSwitcher from 'ol-layerswitcher';
-import osgridGeoJSON from './OSGB_Grid_10km.geojson?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -38,6 +37,22 @@ const projection27700 = new Projection({
   code: 'EPSG:27700',
   extent: [-90607.34, -12247.02, 682220.39, 1247821.27],
 });
+
+const osGridPrefixes = [
+  ['SV', 'SW', 'SX', 'SY', 'SZ', 'TV', 'TW'],
+  ['SQ', 'SR', 'SS', 'ST', 'SU', 'TQ', 'TR'],
+  ['SL', 'SM', 'SN', 'SO', 'SP', 'TL', 'TM'],
+  ['SF', 'SG', 'SH', 'SJ', 'SK', 'TF', 'TG'],
+  ['SA', 'SB', 'SC', 'SD', 'SE', 'TA', 'TB'],
+  ['NV', 'NW', 'NX', 'NY', 'NZ', 'OV', 'OW'],
+  ['NQ', 'NR', 'NS', 'NT', 'NU', 'OQ', 'OR'],
+  ['NL', 'NM', 'NN', 'NO', 'NP', 'OL', 'OM'],
+  ['NF', 'NG', 'NH', 'NJ', 'NK', 'OF', 'OG'],
+  ['NA', 'NB', 'NC', 'ND', 'NE', 'OA', 'OB'],
+  ['HV', 'HW', 'HX', 'HY', 'HZ', 'JV', 'JW'],
+  ['HQ', 'HR', 'HS', 'HT', 'HU', 'JQ', 'JR'],
+  ['HL', 'HM', 'HN', 'HO', 'HP', 'JL', 'JM'],
+];
 
 // Based on ONS mix/max county boundaries
 const extentEngland = transformExtent([-6.3021698, 49.92332077, 1.64949596, 55.30036926], 'EPSG:4326', projection27700);
@@ -334,7 +349,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
                     width: 3,
                   }),
                   text: new Text({
-                    text: feature.get('grid'),
+                    text: feature.getId(),
                     font: '30px bold ui-rounded',
                     stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
                     fill: null,
@@ -342,10 +357,35 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
                 });
               },
               source: new VectorSource({
-                format: new GeoJSON({featureProjection: projection27700}),
                 projection: projection27700,
                 overlaps: false,
-                url: osgridGeoJSON,
+                strategy: bboxStrategy,
+                loader: function loader(extent, number, projection, success) {
+                  const features = [];
+                  const e0 = Math.max(Math.floor(extent[0] / 10000), 0);
+                  const n0 = Math.max(Math.floor(extent[1] / 10000), 0);
+                  const eN = Math.min(Math.ceil(extent[2] / 10000), 69);
+                  const nN = Math.min(Math.ceil(extent[3] / 10000), 129);
+                  for (let e = e0; e < eN + 1; e += 1) {
+                    for (let n = n0; n < nN + 1; n += 1) {
+                      const prefix = osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
+                      const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
+                      const feature = new Feature({
+                        geometry: new Polygon(
+                          [[[e * 10000, n * 10000],
+                            [e * 10000 + 10000, n * 10000],
+                            [e * 10000 + 10000, n * 10000 + 10000],
+                            [e * 10000, n * 10000 + 10000],
+                            [e * 10000, n * 10000]]],
+                        ),
+                      });
+                      feature.setId(grid);
+                      features.push(feature);
+                    }
+                  }
+                  this.addFeatures(features);
+                  success(features);
+                },
               }),
             }),
           ],
