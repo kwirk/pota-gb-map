@@ -32,6 +32,7 @@ import {
   Zoom,
   Rotate,
   Attribution,
+  ScaleLine,
 } from 'ol/control';
 import LayerSwitcher from 'ol-layerswitcher';
 
@@ -289,7 +290,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
     baseSource.setAttributions('Map:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>');
     const map = new Map({
       target: 'map',
-      controls: [new Zoom(), new Rotate()],
+      controls: [new Zoom(), new Rotate(), new ScaleLine()],
       view: new View({
         projection: projection27700,
         center: fromLonLat([-4, 54], projection27700),
