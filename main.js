@@ -1,22 +1,20 @@
 import './style.css';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
-import {Map, View} from 'ol';
+
+import {Feature, Map, View} from 'ol';
 import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import WMTSCapabilities from 'ol/format/WMTSCapabilities';
 import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 import OSM from 'ol/source/OSM';
 import XYZ from 'ol/source/XYZ';
+import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
-import Projection from 'ol/proj/Projection';
+import {Projection, fromLonLat, transformExtent} from 'ol/proj';
 import {intersects} from 'ol/extent';
-import GeoJSON from 'ol/format/GeoJSON';
-import EsriJSON from 'ol/format/EsriJSON';
-import {fromLonLat, transformExtent} from 'ol/proj';
-import {bbox as bboxStrategy} from 'ol/loadingstrategy';
+import {EsriJSON, GeoJSON, WMTSCapabilities} from 'ol/format';
 import {
   Circle as CircleStyle,
   Fill,
@@ -25,14 +23,13 @@ import {
   Text,
 } from 'ol/style';
 import Polygon, {circular} from 'ol/geom/Polygon';
-import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import {
-  Control,
-  Zoom,
-  Rotate,
   Attribution,
+  Control,
+  Rotate,
   ScaleLine,
+  Zoom,
 } from 'ol/control';
 import LayerSwitcher from 'ol-layerswitcher';
 
