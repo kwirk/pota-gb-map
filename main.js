@@ -27,7 +27,12 @@ import {
 import Polygon, {circular} from 'ol/geom/Polygon';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
-import Control from 'ol/control/Control';
+import {
+  Control,
+  Zoom,
+  Rotate,
+  Attribution,
+} from 'ol/control';
 import LayerSwitcher from 'ol-layerswitcher';
 
 // Setup the EPSG:27700 (British National Grid) projection.
@@ -284,6 +289,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
     baseSource.setAttributions('Map:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>');
     const map = new Map({
       target: 'map',
+      controls: [new Zoom(), new Rotate()],
       view: new View({
         projection: projection27700,
         center: fromLonLat([-4, 54], projection27700),
@@ -527,6 +533,18 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           }),
         }),
       ],
+    });
+
+    // Close attribution on map move; open when layers change.
+    const attribution = new Attribution({collapsible: true, collapsed: false});
+    map.addControl(attribution);
+    map.once('movestart', () => { // initial centre map call
+      map.on('movestart', () => { attribution.setCollapsed(true); });
+    });
+    LayerSwitcher.forEachRecursive(map, (layer) => {
+      layer.on('change:visible', () => {
+        if (layer.getVisible()) { attribution.setCollapsed(false); }
+      });
     });
 
     const source = new VectorSource();
