@@ -220,7 +220,7 @@ function createVectorLayer(stylefunc, url, extentCountry) {
     extent: extentCountry,
     style: stylefunc,
     source: new VectorSource({
-      attributions: 'Boundaries:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>',
+      attributions: 'Boundaries:&nbsp;Contains&nbsp;public&nbsp;sector&nbsp;information&nbsp;licensed&nbsp;under&nbsp;the&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
       projection: projection27700,
       format: GeoJSON27700,
       strategy: (extent) => (intersects(extent, extentCountry) ? [extent] : []),
@@ -235,7 +235,7 @@ function createVectorLayerScotGov(stylefunc, layer) {
     extent: extentScotland,
     style: stylefunc,
     source: new VectorSource({
-      attributions: 'Boundaries:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>',
+      attributions: 'Boundaries:&nbsp;Contains&nbsp;public&nbsp;sector&nbsp;information&nbsp;licensed&nbsp;under&nbsp;the&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
       projection: projection27700,
       format: new EsriJSONObjectID(),
       strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
@@ -287,7 +287,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
     });
 
     const baseSource = new WMTS(options);
-    baseSource.setAttributions('Map:&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open&nbsp;Government&nbsp;Licence.</a>');
+    baseSource.setAttributions('Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
     const map = new Map({
       target: 'map',
       controls: [new Zoom(), new Rotate(), new ScaleLine()],
