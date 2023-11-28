@@ -126,6 +126,9 @@ const colorSSSI = 'rgba(0, 246, 171, 1)';
 function polygonStyleFunctionSSSI(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
+    text = feature.get('SSSI_NAME');
+  }
+  if (text === undefined) {
     text = feature.get('sssi_name');
   }
   return polygonStyleFunction(feature, resolution, text, colorSSSI);
@@ -138,7 +141,7 @@ function polygonStyleFunctionNNR(feature, resolution) {
     text = feature.get('NNR_Name');
   }
   if (text === undefined) {
-    text = feature.get('nnr_name');
+    text = feature.get('NNR_NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorNNR);
 }
@@ -159,6 +162,9 @@ const colorAONB = 'rgba(247, 0, 0, 1)';
 function polygonStyleFunctionAONB(feature, resolution) {
   let text = feature.get('AONB_NAME');
   if (text === undefined) {
+    text = feature.get('NAME');
+  }
+  if (text === undefined) {
     text = feature.get('name');
   }
   return polygonStyleFunction(feature, resolution, text, colorAONB);
@@ -171,24 +177,24 @@ function polygonStyleFunctionNSA(feature, resolution) {
 
 const colorSAC = 'rgba(126, 0, 76, 1)';
 function polygonStyleFunctionSAC(feature, resolution) {
-  let text = feature.get('NAME');
+  let text = feature.get('SAC_NAME');
   if (text === undefined) {
     text = feature.get('SAC_name');
   }
   if (text === undefined) {
-    text = feature.get('sac_name');
+    text = feature.get('NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorSAC);
 }
 
 const colorSPA = 'rgba(200, 100, 50, 1)';
 function polygonStyleFunctionSPA(feature, resolution) {
-  let text = feature.get('NAME');
+  let text = feature.get('SPA_NAME');
   if (text === undefined) {
     text = feature.get('SPA_Name');
   }
   if (text === undefined) {
-    text = feature.get('spa_name');
+    text = feature.get('NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorSPA);
 }
@@ -206,7 +212,7 @@ function polygonStyleFunctionNP(feature, resolution) {
     text = feature.get('np_name');
   }
   if (text === undefined) {
-    text = feature.get('name');
+    text = feature.get('NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorNP);
 }
