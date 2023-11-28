@@ -244,8 +244,27 @@ function createVectorLayerScotGov(stylefunc, layer) {
 }
 
 function vectorLayerEngland(stylefunc, url) {
-  return createVectorLayer(stylefunc, url, extentEngland);
+  return new VectorLayer({
+    minZoom: 6,
+    style: stylefunc,
+    source: new VectorSource({
+      attributions: 'Boundaries:©&nbsp;Natural&nbsp;England&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
+      format: new EsriJSON(),
+      projection: projection27700,
+      strategy: bboxStrategy,
+      url: (extent) => {
+        const srid = projection27700
+          .getCode()
+          .split(/:(?=\d+$)/)
+          .pop();
+        return `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
+        + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":${srid}}}&`
+        + `geometryType=esriGeometryEnvelope&inSR=${srid}&outFields=*&outSR=${srid}`;
+      },
+    }),
+  });
 }
+
 function vectorLayerScotland(stylefunc, url) {
   return createVectorLayer(stylefunc, url, extentScotland);
 }
@@ -410,8 +429,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         createLayerGroup(
           `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
           polygonStyleFunctionAONB,
-          'https://environment.data.gov.uk/spatialdata/areas-of-outstanding-natural-beauty-england/wfs?service=WFS&'
-            + 'typeName=dataset-0c1ea47f-3c79-47f0-b0ed-094e0a136971:Areas_of_Outstanding_Natural_Beauty_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
           null, // National Scenic Areas below
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
           false,
@@ -431,8 +449,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           layers: [
             vectorLayerEngland(
               polygonStyleFunctionNP,
-              'https://environment.data.gov.uk/spatialdata/national-parks-england/wfs?service=WFS&'
-              + 'typeName=dataset-e819098e-e248-4a8f-b684-5a21ca521b9b:National_Parks_England&',
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
             ),
             vectorLayerWales(
               polygonStyleFunctionNP,
@@ -445,8 +462,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         createLayerGroup(
           `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
           polygonStyleFunctionSSSI,
-          'https://environment.data.gov.uk/spatialdata/sites-of-special-scientific-interest-england/wfs?service=WFS&'
-            + 'typeName=dataset-ba8dc201-66ef-4983-9d46-7378af21027e:Sites_of_Special_Scientific_Interest_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
           false,
@@ -454,8 +470,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         createLayerGroup(
           `${legendBox(colorSAC)} Special Areas of Conservation`,
           polygonStyleFunctionSAC,
-          'https://environment.data.gov.uk/spatialdata/special-areas-of-conservation-england/wfs?service=WFS&'
-            + 'typeName=dataset-6ecea2a1-5d2e-4f53-ba1f-690f4046ed1c:Special_Areas_of_Conservation_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
           false,
@@ -463,8 +478,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         createLayerGroup(
           `${legendBox(colorSPA)} Special Protection Areas`,
           polygonStyleFunctionSPA,
-          'https://environment.data.gov.uk/spatialdata/special-protection-areas-england/wfs?service=WFS&'
-            + 'typeName=dataset-4c660eee-887e-4c8b-91e5-d84b4c1078ac:Special_Protection_Areas_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
           false,
@@ -472,16 +486,14 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         createLayerGroup(
           `${legendBox(colorCPK)} Country Parks`,
           polygonStyleFunctionCPK,
-          'https://environment.data.gov.uk/spatialdata/country-parks-england/wfs?service=WFS&'
-            + 'typeName=dataset-697b86c9-5dce-4b60-9241-e590bf1d3a99:Country_Parks_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
         ),
         createLayerGroup(
           `${legendBox(colorNNR)} National Nature Reserves`,
           polygonStyleFunctionNNR,
-          'https://environment.data.gov.uk/spatialdata/national-nature-reserves-england/wfs?service=WFS&'
-            + 'typeName=dataset-ff213e4c-423a-4d7e-9e6f-b220600a8db3:National_Nature_Reserves_England&',
+          'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
         ),
