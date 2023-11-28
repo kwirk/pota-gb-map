@@ -13,7 +13,7 @@ import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
-import {intersects} from 'ol/extent';
+import {containsExtent as contains, intersects} from 'ol/extent';
 import {EsriJSON, GeoJSON, WMTSCapabilities} from 'ol/format';
 import {
   Circle as CircleStyle,
@@ -248,10 +248,11 @@ function vectorLayerEngland(stylefunc, url) {
     minZoom: 6,
     style: stylefunc,
     source: new VectorSource({
-      attributions: 'Boundaries:©&nbsp;Natural&nbsp;England&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
+      attributions: 'Boundaries:©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: new EsriJSON(),
       projection: projection27700,
-      strategy: bboxStrategy,
+      strategy: (extent) => (
+        (intersects(extent, extentEngland) && !contains(extentWales, extent)) ? [extent] : []),
       url: (extent) => {
         const srid = projection27700
           .getCode()
