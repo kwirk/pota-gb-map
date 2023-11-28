@@ -67,6 +67,23 @@ const GeoJSON27700 = new GeoJSON({
   featureProjection: projection27700,
 });
 
+class GeoJSONObjectID extends GeoJSON {
+  readFeatureFromObject(object, options) {
+    const feature = super.readFeatureFromObject(object, options);
+    if (feature.get('OBJECTID')) {
+      feature.setId(feature.get('OBJECTID'));
+    } else if (feature.get('fid')) {
+      feature.setId(feature.get('fid'));
+    }
+    return feature;
+  }
+}
+
+const GeoJSONObjectID27700 = new GeoJSONObjectID({
+  dataProjection: projection27700,
+  featureProjection: projection27700,
+});
+
 class EsriJSONObjectID extends EsriJSON {
   readFeatureFromObject(object, options) {
     return super.readFeatureFromObject(object, options, 'OBJECTID');
@@ -225,7 +242,7 @@ function createVectorLayer(stylefunc, url, extentCountry) {
     source: new VectorSource({
       attributions: 'Boundaries:&nbsp;Contains&nbsp;public&nbsp;sector&nbsp;information&nbsp;licensed&nbsp;under&nbsp;the&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
       projection: projection27700,
-      format: GeoJSON27700,
+      format: GeoJSONObjectID27700,
       strategy: (extent) => (intersects(extent, extentCountry) ? [extent] : []),
       url: (extent) => `${url}version=2.0.0&request=GetFeature&outputFormat=application/json&srsname=EPSG:27700&bbox=${extent}`,
     }),
