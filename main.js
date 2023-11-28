@@ -527,16 +527,10 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
                 format: new EsriJSON(),
                 projection: projection27700,
                 strategy: bboxStrategy,
-                url: (extent) => {
-                  const srid = projection27700
-                    .getCode()
-                    .split(/:(?=\d+$)/)
-                    .pop();
-                  return 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
+                url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
                   + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
-                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":${srid}}}&`
-                  + `geometryType=esriGeometryEnvelope&inSR=${srid}&outFields=OBJECTID,Name&outSR=${srid}&where=Access%3D'Publicised Reserve'`;
-                },
+                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised Reserve\'',
               }),
             }),
           ],
