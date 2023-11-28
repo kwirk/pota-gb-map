@@ -276,15 +276,9 @@ function vectorLayerEngland(stylefunc, url) {
       projection: projection27700,
       strategy: (extent) => (
         (intersects(extent, extentEngland) && !contains(extentWales, extent)) ? [extent] : []),
-      url: (extent) => {
-        const srid = projection27700
-          .getCode()
-          .split(/:(?=\d+$)/)
-          .pop();
-        return `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
-        + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":${srid}}}&`
-        + `geometryType=esriGeometryEnvelope&inSR=${srid}&outFields=*&outSR=${srid}`;
-      },
+      url: (extent) => `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
+        + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+        + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=*&outSR=27700',
     }),
   });
 }
