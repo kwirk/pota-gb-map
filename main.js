@@ -444,94 +444,99 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             }),
           ],
         }),
-        createLayerGroup(
-          `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
-          polygonStyleFunctionAONB,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
-          null, // National Scenic Areas below
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
-          false,
-        ),
         new LayerGroup({
-          title: `${legendBox(colorAONB)} National Scenic Areas`,
-          combine: true,
-          visible: false,
+          title: 'Designations',
           layers: [
-            createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
-          ],
-        }),
-        new LayerGroup({
-          title: `${legendBox(colorNP)} National Parks`,
-          combine: true,
-          visible: false,
-          layers: [
-            vectorLayerEngland(
-              polygonStyleFunctionNP,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
+            createLayerGroup(
+              `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
+              polygonStyleFunctionAONB,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
+              null, // National Scenic Areas below
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
+              false,
             ),
-            vectorLayerWales(
-              polygonStyleFunctionNP,
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
+            new LayerGroup({
+              title: `${legendBox(colorAONB)} National Scenic Areas`,
+              combine: true,
+              visible: false,
+              layers: [
+                createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
+              ],
+            }),
+            new LayerGroup({
+              title: `${legendBox(colorNP)} National Parks`,
+              combine: true,
+              visible: false,
+              layers: [
+                vectorLayerEngland(
+                  polygonStyleFunctionNP,
+                  'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
+                ),
+                vectorLayerWales(
+                  polygonStyleFunctionNP,
+                  'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
+                ),
+                createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
+                createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
+              ],
+            }),
+            createLayerGroup(
+              `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
+              polygonStyleFunctionSSSI,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
+              false,
             ),
-            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
-            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
-          ],
-        }),
-        createLayerGroup(
-          `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
-          polygonStyleFunctionSSSI,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
-          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
-          false,
-        ),
-        createLayerGroup(
-          `${legendBox(colorSAC)} Special Areas of Conservation`,
-          polygonStyleFunctionSAC,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
-          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
-          false,
-        ),
-        createLayerGroup(
-          `${legendBox(colorSPA)} Special Protection Areas`,
-          polygonStyleFunctionSPA,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
-          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
-          false,
-        ),
-        createLayerGroup(
-          `${legendBox(colorCPK)} Country Parks`,
-          polygonStyleFunctionCPK,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
-          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
-        ),
-        createLayerGroup(
-          `${legendBox(colorNNR)} National Nature Reserves`,
-          polygonStyleFunctionNNR,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
-          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
-        ),
-        new LayerGroup({
-          title: `${legendBox(colorRSPB)} RSPB Reserves`,
-          combine: true,
-          layers: [
-            new VectorLayer({
-              minZoom: 6,
-              style: polygonStyleFunctionRSPB,
-              source: new VectorSource({
-                attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
-                format: new EsriJSON(),
-                projection: projection27700,
-                strategy: bboxStrategy,
-                url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
-                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
-                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
-                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised Reserve\'',
-              }),
+            createLayerGroup(
+              `${legendBox(colorSAC)} Special Areas of Conservation`,
+              polygonStyleFunctionSAC,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
+              false,
+            ),
+            createLayerGroup(
+              `${legendBox(colorSPA)} Special Protection Areas`,
+              polygonStyleFunctionSPA,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
+              false,
+            ),
+            createLayerGroup(
+              `${legendBox(colorCPK)} Country Parks`,
+              polygonStyleFunctionCPK,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
+            ),
+            createLayerGroup(
+              `${legendBox(colorNNR)} National Nature Reserves`,
+              polygonStyleFunctionNNR,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
+            ),
+            new LayerGroup({
+              title: `${legendBox(colorRSPB)} RSPB Reserves`,
+              combine: true,
+              layers: [
+                new VectorLayer({
+                  minZoom: 6,
+                  style: polygonStyleFunctionRSPB,
+                  source: new VectorSource({
+                    attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
+                    format: new EsriJSON(),
+                    projection: projection27700,
+                    strategy: bboxStrategy,
+                    url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
+                      + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
+                      + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                      + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised Reserve\'',
+                  }),
+                }),
+              ],
             }),
           ],
         }),
