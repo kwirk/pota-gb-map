@@ -267,7 +267,7 @@ function createVectorLayerScotGov(stylefunc, layer) {
     extent: extentScotland,
     style: stylefunc,
     source: new VectorSource({
-      attributions: 'Boundaries:&nbsp;Contains&nbsp;public&nbsp;sector&nbsp;information&nbsp;licensed&nbsp;under&nbsp;the&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
+      attributions: 'Boundaries:&nbsp;©&nbsp;NatureScot&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       projection: projection27700,
       format: new EsriJSONObjectID(),
       strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
@@ -283,7 +283,7 @@ function vectorLayerEngland(stylefunc, url) {
     minZoom: 6,
     style: stylefunc,
     source: new VectorSource({
-      attributions: 'Boundaries:©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
+      attributions: 'Boundaries:&nbsp;©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: new EsriJSON(),
       projection: projection27700,
       strategy: (extent) => (
@@ -296,10 +296,14 @@ function vectorLayerEngland(stylefunc, url) {
 }
 
 function vectorLayerScotland(stylefunc, url) {
-  return createVectorLayer(stylefunc, url, extentScotland);
+  const layer = createVectorLayer(stylefunc, url, extentScotland);
+  layer.getSource().setAttributions('Boundaries:&nbsp;©&nbsp;NatureScot&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
+  return layer;
 }
 function vectorLayerWales(stylefunc, url) {
-  return createVectorLayer(stylefunc, url, extentWales);
+  const layer = createVectorLayer(stylefunc, url, extentWales);
+  layer.getSource().setAttributions('Boundaries:&nbsp;©&nbsp;Natural&nbsp;Resources&nbsp;Wales&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
+  return layer;
 }
 
 function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, visible = true) {
