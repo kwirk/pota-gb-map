@@ -163,6 +163,18 @@ function polygonStyleFunctionNNR(feature, resolution) {
   return polygonStyleFunction(feature, resolution, text, colorNNR);
 }
 
+const colorLNR = 'rgba(110, 140, 0, 1)';
+function polygonStyleFunctionLNR(feature, resolution) {
+  let text = feature.get('NAME');
+  if (text === undefined) {
+    text = feature.get('LNR_Name');
+  }
+  if (text === undefined) {
+    text = feature.get('LNR_NAME');
+  }
+  return polygonStyleFunction(feature, resolution, text, colorNNR);
+}
+
 const colorCPK = 'rgba(255, 180, 0, 1)';
 function polygonStyleFunctionCPK(feature, resolution) {
   let text = feature.get('NAME');
@@ -510,6 +522,14 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
               'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
+            ),
+            createLayerGroup(
+              `${legendBox(colorLNR)} Local Nature Reserves`,
+              polygonStyleFunctionLNR,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query?',
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:lnr&',
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_LNR&',
+              false,
             ),
             createLayerGroup(
               `${legendBox(colorNNR)} National Nature Reserves`,
