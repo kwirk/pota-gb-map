@@ -616,9 +616,9 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
       map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
         if (layer.getVisible() && layer.get('refUrl')) {
           content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
-        };
+        }
       });
-      if (content) {popup.show(event.coordinate, content)}
+      if (content) { popup.show(event.coordinate, content); }
     });
 
     const source = new VectorSource();
