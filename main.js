@@ -81,6 +81,14 @@ class GeoJSONObjectID extends GeoJSON {
   }
 }
 
+class GeoJSONReference extends GeoJSON {
+  readFeatureFromObject(object, options) {
+    const feature = super.readFeatureFromObject(object, options);
+    feature.setId(feature.get('reference'));
+    return feature;
+  }
+}
+
 const GeoJSONObjectID27700 = new GeoJSONObjectID({
   dataProjection: projection27700,
   featureProjection: projection27700,
@@ -583,7 +591,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
               return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
             },
             projection: projection27700,
-            format: new GeoJSON({featureProjection: projection27700}),
+            format: new GeoJSONReference({featureProjection: projection27700}),
           }),
         }),
       ],
