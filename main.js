@@ -1,5 +1,6 @@
 import './style.css';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
+import 'ol-popup/src/ol-popup.css';
 
 import {Feature, Map, View} from 'ol';
 import LayerGroup from 'ol/layer/Group';
@@ -32,6 +33,7 @@ import {
   Zoom,
 } from 'ol/control';
 import LayerSwitcher from 'ol-layerswitcher';
+import Popup from 'ol-popup';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -565,6 +567,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           ],
         }),
         new VectorLayer({
+          refUrl: 'https://pota.app/#/park/',
           minZoom: 6,
           style: pointStyleFunction,
           source: new VectorSource({
@@ -596,6 +599,18 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
       layer.on('change:visible', () => {
         if (layer.getVisible()) { attribution.setCollapsed(false); }
       });
+    });
+
+    const popup = new Popup();
+    map.addOverlay(popup);
+    map.on('singleclick', (event) => {
+      let content = '';
+      map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
+        if (layer.getVisible() && layer.get('refUrl')) {
+          content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
+        };
+      });
+      if (content) {popup.show(event.coordinate, content)}
     });
 
     const source = new VectorSource();
