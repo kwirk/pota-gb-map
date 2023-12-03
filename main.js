@@ -9,15 +9,15 @@ import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import WMTS, {optionsFromCapabilities} from 'ol/source/WMTS';
 import OSM from 'ol/source/OSM';
 import XYZ from 'ol/source/XYZ';
+import TileGrid from 'ol/tilegrid/TileGrid';
 import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
 import {containsExtent as contains, intersects} from 'ol/extent';
-import {EsriJSON, GeoJSON, WMTSCapabilities} from 'ol/format';
+import {EsriJSON, GeoJSON} from 'ol/format';
 import {
   Circle as CircleStyle,
   Fill,
@@ -347,396 +347,391 @@ function createLayerGroup(
   });
 }
 
-const apiKey = import.meta.env.VITE_OS_APIKEY;
-const parser = new WMTSCapabilities();
-fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=GetCapabilities&version=2.0.0`)
-  .then((response) => response.text())
-  .then((text) => {
-    const result = parser.read(text);
-    const options = optionsFromCapabilities(result, {
-      layer: 'Light_27700',
-      matrixSet: 'EPSG:27700',
-    });
-
-    const baseSource = new WMTS(options);
-    baseSource.setAttributions('Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
-    const map = new Map({
-      target: 'map',
-      controls: [new Zoom(), new Rotate(), new ScaleLine()],
-      view: new View({
-        projection: projection27700,
-        center: fromLonLat([-4, 54], projection27700),
-        zoom: 2,
-        maxZoom: 11, // Max of OS API Free
-      }),
+const map = new Map({
+  target: 'map',
+  controls: [new Zoom(), new Rotate(), new ScaleLine()],
+  view: new View({
+    projection: projection27700,
+    center: fromLonLat([-4, 54], projection27700),
+    zoom: 2,
+    maxZoom: 15,
+  }),
+  layers: [
+    new LayerGroup({
+      title: 'Base maps',
       layers: [
-        new LayerGroup({
-          title: 'Base maps',
-          layers: [
-            new TileLayer({
-              title: 'Ordnance Survey',
-              shortTitle: 'OS',
-              type: 'base',
-              source: baseSource,
-            }),
-            new TileLayer({
-              title: 'OSM',
-              shortTitle: 'OSM',
-              type: 'base',
-              visible: false,
-              source: new OSM({
-                attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
-              }),
-            }),
-            new TileLayer({
-              title: 'OpenTopoMap',
-              shortTitle: 'OTM',
-              type: 'base',
-              visible: false,
-              source: new XYZ({
-                attributions: 'Map&nbsp;data:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors,&nbsp;SRTM. '
-                 + 'Map&nbsp;display:&nbsp;©<a href="http://opentopomap.org" target="_blank">OpenTopoMap</a>&nbsp;(<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>).',
-                url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
-              }),
-            }),
-          ],
-        }),
-        new VectorLayer({
-          maxZoom: 6,
-          style: new Style({
-            text: new Text({
-              text: 'Zoom In',
-              font: '30px bold ui-rounded',
-              fill: new Fill({color: '#000000'}),
-              stroke: new Stroke({color: '#000000', width: 1}),
-            }),
-          }),
-          source: new VectorSource({
-            attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed&nbsp;by&nbsp;Steven&nbsp;Hiscocks&nbsp;M1SDH.</a>',
+        new TileLayer({
+          title: 'Ordnance Survey',
+          shortTitle: 'OS',
+          type: 'base',
+          extent: projection27700.getExtent(),
+          source: new XYZ({
+            attributions: 'Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
             projection: projection27700,
-            format: GeoJSON27700,
-            strategy: bboxStrategy,
-            loader: function loader(extent, resolution, projection, success) {
-              this.clear();
-              this.addFeature(
-                new Feature({
-                  geometry: new Point([
-                    (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
-                  ]),
-                }),
-              );
-              success();
-            },
+            tileGrid: new TileGrid({
+              origin: [-238375.0, 1376256.0],
+              resolutions: [896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75],
+            }),
+            url: `https://api.os.uk/maps/raster/v1/zxy/Light_27700/{z}/{x}/{y}.png?key=${import.meta.env.VITE_OS_APIKEY}`,
           }),
         }),
-        new LayerGroup({
-          title: 'Overlays',
-          minZoom: 6,
-          layers: [
-            new VectorLayer({
-              title: 'OS Grid (WAB Squares)',
-              shortTitle: 'OSG',
-              visible: false,
-              style: function style(feature) {
-                return new Style({
-                  stroke: new Stroke({
-                    color: 'rgba(100, 100, 100, 0.2)',
-                    width: 3,
-                  }),
-                  text: new Text({
-                    text: feature.getId(),
-                    font: '30px bold ui-rounded',
-                    stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
-                    fill: null,
-                  }),
-                });
-              },
-              source: new VectorSource({
-                projection: projection27700,
-                overlaps: false,
-                strategy: bboxStrategy,
-                loader: function loader(extent, number, projection, success) {
-                  const features = [];
-                  const e0 = Math.max(Math.floor(extent[0] / 10000), 0);
-                  const n0 = Math.max(Math.floor(extent[1] / 10000), 0);
-                  const eN = Math.min(Math.ceil(extent[2] / 10000), 69);
-                  const nN = Math.min(Math.ceil(extent[3] / 10000), 129);
-                  for (let e = e0; e < eN + 1; e += 1) {
-                    for (let n = n0; n < nN + 1; n += 1) {
-                      const prefix = osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
-                      const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
-                      const feature = new Feature({
-                        geometry: new Polygon(
-                          [[[e * 10000, n * 10000],
-                            [e * 10000 + 10000, n * 10000],
-                            [e * 10000 + 10000, n * 10000 + 10000],
-                            [e * 10000, n * 10000 + 10000],
-                            [e * 10000, n * 10000]]],
-                        ),
-                      });
-                      feature.setId(grid);
-                      features.push(feature);
-                    }
-                  }
-                  this.addFeatures(features);
-                  success(features);
-                },
-              }),
-            }),
-          ],
+        new TileLayer({
+          title: 'OSM',
+          shortTitle: 'OSM',
+          type: 'base',
+          visible: false,
+          source: new OSM({
+            attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
+          }),
         }),
-        new LayerGroup({
-          title: 'Designations',
-          layers: [
-            createLayerGroup(
-              `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
-              'AONB',
-              polygonStyleFunctionAONB,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
-              null, // National Scenic Areas below
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
-              false,
-            ),
-            new LayerGroup({
-              title: `${legendBox(colorAONB)} National Scenic Areas`,
-              shortTitle: 'NSA',
-              combine: true,
-              visible: false,
-              layers: [
-                createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
-              ],
-            }),
-            new LayerGroup({
-              title: `${legendBox(colorNP)} National Parks`,
-              shortTitle: 'NP',
-              combine: true,
-              visible: false,
-              layers: [
-                vectorLayerEngland(
-                  polygonStyleFunctionNP,
-                  'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
-                ),
-                vectorLayerWales(
-                  polygonStyleFunctionNP,
-                  'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
-                ),
-                createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
-                createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
-              ],
-            }),
-            createLayerGroup(
-              `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
-              'SSSI',
-              polygonStyleFunctionSSSI,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
-              false,
-            ),
-            createLayerGroup(
-              `${legendBox(colorSAC)} Special Areas of Conservation`,
-              'SAC',
-              polygonStyleFunctionSAC,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
-              false,
-            ),
-            createLayerGroup(
-              `${legendBox(colorSPA)} Special Protection Areas`,
-              'SPA',
-              polygonStyleFunctionSPA,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
-              false,
-            ),
-            createLayerGroup(
-              `${legendBox(colorCPK)} Country Parks`,
-              'CPK',
-              polygonStyleFunctionCPK,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
-            ),
-            createLayerGroup(
-              `${legendBox(colorLNR)} Local Nature Reserves`,
-              'LNR',
-              polygonStyleFunctionLNR,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:lnr&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_LNR&',
-              false,
-            ),
-            createLayerGroup(
-              `${legendBox(colorNNR)} National Nature Reserves`,
-              'NNR',
-              polygonStyleFunctionNNR,
-              'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
-              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
-            ),
-            new LayerGroup({
-              title: `${legendBox(colorRSPB)} RSPB Reserves`,
-              shortTitle: 'RSPB',
-              combine: true,
-              layers: [
-                new VectorLayer({
-                  minZoom: 6,
-                  style: polygonStyleFunctionRSPB,
-                  source: new VectorSource({
-                    attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
-                    format: new EsriJSON(),
-                    projection: projection27700,
-                    strategy: bboxStrategy,
-                    url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
-                      + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
-                      + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
-                      + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised Reserve\'',
-                  }),
-                }),
-              ],
-            }),
-          ],
-        }),
-        new VectorLayer({
-          shortTitle: 'POTA',
-          refUrl: 'https://pota.app/#/park/',
-          minZoom: 6,
-          style: pointStyleFunction,
-          source: new VectorSource({
-            attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
-            strategy: bboxStrategy,
-            url: (extent) => {
-              let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
-              newExtent = [
-                Math.floor(newExtent[0] * 10) / 10,
-                Math.floor(newExtent[1] * 10) / 10,
-                Math.ceil(newExtent[2] * 10) / 10,
-                Math.ceil(newExtent[3] * 10) / 10];
-              return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
-            },
-            projection: projection27700,
-            format: new GeoJSONReference({featureProjection: projection27700}),
+        new TileLayer({
+          title: 'OpenTopoMap',
+          shortTitle: 'OTM',
+          type: 'base',
+          visible: false,
+          source: new XYZ({
+            attributions: 'Map&nbsp;data:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors,&nbsp;SRTM. '
+              + 'Map&nbsp;display:&nbsp;©<a href="http://opentopomap.org" target="_blank">OpenTopoMap</a>&nbsp;(<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>).',
+            url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
       ],
-    });
-
-    const link = new Link({params: ['x', 'y', 'z'], replace: true});
-    function layersLinkCallback(newValue) {
-      if (newValue) { // only update if no null
-        const layers = newValue.split(' ');
-        LayerSwitcher.forEachRecursive(map, (layer) => {
-          const shortTitle = layer.get('shortTitle');
-          if (layers.includes(shortTitle)) {
-            layer.setVisible(true);
-          } else if (shortTitle) {
-            layer.setVisible(false);
-          }
-        });
-      }
-    }
-    layersLinkCallback(link.track('layers', layersLinkCallback));
-
-    const activeLayers = new Collection();
-    LayerSwitcher.forEachRecursive(map, (layer) => {
-      const shortTitle = layer.get('shortTitle');
-      if (shortTitle) {
-        if (layer.getVisible()) {
-          activeLayers.push(shortTitle);
-        }
-        layer.on('change:visible', () => {
-          if (layer.getVisible()) {
-            activeLayers.push(shortTitle);
-          } else {
-            activeLayers.remove(shortTitle);
-          }
-        });
-      }
-    });
-    activeLayers.on('change:length', () => {
-      link.update('layers', activeLayers.getArray().join(' '));
-    });
-    map.addInteraction(link);
-
-    // Close attribution on map move; open when layers change.
-    const attribution = new Attribution({collapsible: true, collapsed: false});
-    map.addControl(attribution);
-    map.once('movestart', () => { // initial centre map call
-      map.on('movestart', () => { attribution.setCollapsed(true); });
-    });
-    LayerSwitcher.forEachRecursive(map, (layer) => {
-      layer.on('change:visible', () => {
-        if (layer.getVisible()) { attribution.setCollapsed(false); }
-      });
-    });
-
-    const popup = new Popup();
-    map.addOverlay(popup);
-    map.on('singleclick', (event) => {
-      let content = '';
-      map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
-        if (layer.getVisible() && layer.get('refUrl')) {
-          content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
-        }
-      });
-      if (content) { popup.show(event.coordinate, content); }
-    });
-
-    const source = new VectorSource();
-    const layer = new VectorLayer({
-      source: source,
+    }),
+    new VectorLayer({
+      maxZoom: 6,
       style: new Style({
-        image: new CircleStyle({
-          radius: 5,
-          fill: new Fill({color: '#AAAAFF'}),
-          stroke: new Stroke({color: '#0000FF', width: 1}),
+        text: new Text({
+          text: 'Zoom In',
+          font: '30px bold ui-rounded',
+          fill: new Fill({color: '#000000'}),
+          stroke: new Stroke({color: '#000000', width: 1}),
         }),
       }),
-    });
-    map.addLayer(layer);
+      source: new VectorSource({
+        attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed&nbsp;by&nbsp;Steven&nbsp;Hiscocks&nbsp;M1SDH.</a>',
+        projection: projection27700,
+        format: GeoJSON27700,
+        strategy: bboxStrategy,
+        loader: function loader(extent, resolution, projection, success) {
+          this.clear();
+          this.addFeature(
+            new Feature({
+              geometry: new Point([
+                (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
+              ]),
+            }),
+          );
+          success();
+        },
+      }),
+    }),
+    new LayerGroup({
+      title: 'Overlays',
+      minZoom: 6,
+      layers: [
+        new VectorLayer({
+          title: 'OS Grid (WAB Squares)',
+          shortTitle: 'OSG',
+          visible: false,
+          style: function style(feature) {
+            return new Style({
+              stroke: new Stroke({
+                color: 'rgba(100, 100, 100, 0.2)',
+                width: 3,
+              }),
+              text: new Text({
+                text: feature.getId(),
+                font: '30px bold ui-rounded',
+                stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
+                fill: null,
+              }),
+            });
+          },
+          source: new VectorSource({
+            projection: projection27700,
+            overlaps: false,
+            strategy: bboxStrategy,
+            loader: function loader(extent, number, projection, success) {
+              const features = [];
+              const e0 = Math.max(Math.floor(extent[0] / 10000), 0);
+              const n0 = Math.max(Math.floor(extent[1] / 10000), 0);
+              const eN = Math.min(Math.ceil(extent[2] / 10000), 69);
+              const nN = Math.min(Math.ceil(extent[3] / 10000), 129);
+              for (let e = e0; e < eN + 1; e += 1) {
+                for (let n = n0; n < nN + 1; n += 1) {
+                  const prefix = osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
+                  const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
+                  const feature = new Feature({
+                    geometry: new Polygon(
+                      [[[e * 10000, n * 10000],
+                        [e * 10000 + 10000, n * 10000],
+                        [e * 10000 + 10000, n * 10000 + 10000],
+                        [e * 10000, n * 10000 + 10000],
+                        [e * 10000, n * 10000]]],
+                    ),
+                  });
+                  feature.setId(grid);
+                  features.push(feature);
+                }
+              }
+              this.addFeatures(features);
+              success(features);
+            },
+          }),
+        }),
+      ],
+    }),
+    new LayerGroup({
+      title: 'Designations',
+      layers: [
+        createLayerGroup(
+          `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
+          'AONB',
+          polygonStyleFunctionAONB,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
+          null, // National Scenic Areas below
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
+          false,
+        ),
+        new LayerGroup({
+          title: `${legendBox(colorAONB)} National Scenic Areas`,
+          shortTitle: 'NSA',
+          combine: true,
+          visible: false,
+          layers: [
+            createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendBox(colorNP)} National Parks`,
+          shortTitle: 'NP',
+          combine: true,
+          visible: false,
+          layers: [
+            vectorLayerEngland(
+              polygonStyleFunctionNP,
+              'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
+            ),
+            vectorLayerWales(
+              polygonStyleFunctionNP,
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
+            ),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
+          ],
+        }),
+        createLayerGroup(
+          `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
+          'SSSI',
+          polygonStyleFunctionSSSI,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
+          false,
+        ),
+        createLayerGroup(
+          `${legendBox(colorSAC)} Special Areas of Conservation`,
+          'SAC',
+          polygonStyleFunctionSAC,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
+          false,
+        ),
+        createLayerGroup(
+          `${legendBox(colorSPA)} Special Protection Areas`,
+          'SPA',
+          polygonStyleFunctionSPA,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
+          false,
+        ),
+        createLayerGroup(
+          `${legendBox(colorCPK)} Country Parks`,
+          'CPK',
+          polygonStyleFunctionCPK,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
+        ),
+        createLayerGroup(
+          `${legendBox(colorLNR)} Local Nature Reserves`,
+          'LNR',
+          polygonStyleFunctionLNR,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:lnr&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_LNR&',
+          false,
+        ),
+        createLayerGroup(
+          `${legendBox(colorNNR)} National Nature Reserves`,
+          'NNR',
+          polygonStyleFunctionNNR,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
+          'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
+        ),
+        new LayerGroup({
+          title: `${legendBox(colorRSPB)} RSPB Reserves`,
+          shortTitle: 'RSPB',
+          combine: true,
+          layers: [
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionRSPB,
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
+                format: new EsriJSON(),
+                projection: projection27700,
+                strategy: bboxStrategy,
+                url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
+                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
+                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised Reserve\'',
+              }),
+            }),
+          ],
+        }),
+      ],
+    }),
+    new VectorLayer({
+      shortTitle: 'POTA',
+      refUrl: 'https://pota.app/#/park/',
+      minZoom: 6,
+      style: pointStyleFunction,
+      source: new VectorSource({
+        attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
+        strategy: bboxStrategy,
+        url: (extent) => {
+          let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+          newExtent = [
+            Math.floor(newExtent[0] * 10) / 10,
+            Math.floor(newExtent[1] * 10) / 10,
+            Math.ceil(newExtent[2] * 10) / 10,
+            Math.ceil(newExtent[3] * 10) / 10];
+          return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
+        },
+        projection: projection27700,
+        format: new GeoJSONReference({featureProjection: projection27700}),
+      }),
+    }),
+  ],
+});
 
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const coords = [pos.coords.longitude, pos.coords.latitude];
-        const accuracy = circular(coords, pos.coords.accuracy);
-        source.clear(true);
-        source.addFeatures([
-          new Feature(
-            accuracy.transform('EPSG:4326', projection27700),
-          ),
-          new Feature(new Point(fromLonLat(coords, projection27700))),
-        ]);
-      },
-      () => {},
-      {
-        enableHighAccuracy: true,
-      },
-    );
-
-    const locate = document.createElement('div');
-    locate.className = 'ol-control ol-unselectable locate';
-    locate.innerHTML = '<button title="Locate me">◎</button>';
-    locate.addEventListener('click', () => {
-      if (!source.isEmpty()) {
-        map.getView().fit(source.getExtent(), {
-          maxZoom: 12,
-          duration: 500,
-        });
+const link = new Link({params: ['x', 'y', 'z'], replace: true});
+function layersLinkCallback(newValue) {
+  if (newValue) { // only update if no null
+    const layers = newValue.split(' ');
+    LayerSwitcher.forEachRecursive(map, (layer) => {
+      const shortTitle = layer.get('shortTitle');
+      if (layers.includes(shortTitle)) {
+        layer.setVisible(true);
+      } else if (shortTitle) {
+        layer.setVisible(false);
       }
     });
+  }
+}
+layersLinkCallback(link.track('layers', layersLinkCallback));
 
-    map.addControl(
-      new Control({
-        element: locate,
-      }),
-    );
-
-    const layerSwitcher = new LayerSwitcher({
-      reverse: true,
-      groupSelectStyle: 'none',
-      startActive: true,
+const activeLayers = new Collection();
+LayerSwitcher.forEachRecursive(map, (layer) => {
+  const shortTitle = layer.get('shortTitle');
+  if (shortTitle) {
+    if (layer.getVisible()) {
+      activeLayers.push(shortTitle);
+    }
+    layer.on('change:visible', () => {
+      if (layer.getVisible()) {
+        activeLayers.push(shortTitle);
+      } else {
+        activeLayers.remove(shortTitle);
+      }
     });
-    map.addControl(layerSwitcher);
+  }
+});
+activeLayers.on('change:length', () => {
+  link.update('layers', activeLayers.getArray().join(' '));
+});
+map.addInteraction(link);
+
+// Close attribution on map move; open when layers change.
+const attribution = new Attribution({collapsible: true, collapsed: false});
+map.addControl(attribution);
+map.once('movestart', () => { // initial centre map call
+  map.on('movestart', () => { attribution.setCollapsed(true); });
+});
+LayerSwitcher.forEachRecursive(map, (layer) => {
+  layer.on('change:visible', () => {
+    if (layer.getVisible()) { attribution.setCollapsed(false); }
   });
+});
+
+const popup = new Popup();
+map.addOverlay(popup);
+map.on('singleclick', (event) => {
+  let content = '';
+  map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
+    if (layer.getVisible() && layer.get('refUrl')) {
+      content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
+    }
+  });
+  if (content) { popup.show(event.coordinate, content); }
+});
+
+const source = new VectorSource();
+const layer = new VectorLayer({
+  source: source,
+  style: new Style({
+    image: new CircleStyle({
+      radius: 5,
+      fill: new Fill({color: '#AAAAFF'}),
+      stroke: new Stroke({color: '#0000FF', width: 1}),
+    }),
+  }),
+});
+map.addLayer(layer);
+
+navigator.geolocation.watchPosition(
+  (pos) => {
+    const coords = [pos.coords.longitude, pos.coords.latitude];
+    const accuracy = circular(coords, pos.coords.accuracy);
+    source.clear(true);
+    source.addFeatures([
+      new Feature(
+        accuracy.transform('EPSG:4326', projection27700),
+      ),
+      new Feature(new Point(fromLonLat(coords, projection27700))),
+    ]);
+  },
+  () => {},
+  {
+    enableHighAccuracy: true,
+  },
+);
+
+const locate = document.createElement('div');
+locate.className = 'ol-control ol-unselectable locate';
+locate.innerHTML = '<button title="Locate me">◎</button>';
+locate.addEventListener('click', () => {
+  if (!source.isEmpty()) {
+    map.getView().fit(source.getExtent(), {
+      maxZoom: 12,
+      duration: 500,
+    });
+  }
+});
+
+map.addControl(
+  new Control({
+    element: locate,
+  }),
+);
+
+const layerSwitcher = new LayerSwitcher({
+  reverse: true,
+  groupSelectStyle: 'none',
+  startActive: true,
+});
+map.addControl(layerSwitcher);
