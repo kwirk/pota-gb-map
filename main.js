@@ -2,7 +2,9 @@ import './style.css';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 import 'ol-popup/src/ol-popup.css';
 
-import {Feature, Map, View} from 'ol';
+import {
+  Collection, Feature, Map, View,
+} from 'ol';
 import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
@@ -32,6 +34,7 @@ import {
   ScaleLine,
   Zoom,
 } from 'ol/control';
+import Link from 'ol/interaction/Link';
 import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 
@@ -316,7 +319,15 @@ function vectorLayerWales(stylefunc, url) {
   return layer;
 }
 
-function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, visible = true) {
+function createLayerGroup(
+  title,
+  shortTitle,
+  stylefunc,
+  urlEngland,
+  urlScotland,
+  urlWales,
+  visible = true,
+) {
   const layers = [];
   if (urlEngland) {
     layers.push(vectorLayerEngland(stylefunc, urlEngland));
@@ -329,6 +340,7 @@ function createLayerGroup(title, stylefunc, urlEngland, urlScotland, urlWales, v
   }
   return new LayerGroup({
     title: title,
+    shortTitle: shortTitle,
     combine: true,
     visible: visible,
     layers: layers,
@@ -363,11 +375,13 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           layers: [
             new TileLayer({
               title: 'Ordnance Survey',
+              shortTitle: 'OS',
               type: 'base',
               source: baseSource,
             }),
             new TileLayer({
               title: 'OSM',
+              shortTitle: 'OSM',
               type: 'base',
               visible: false,
               source: new OSM({
@@ -376,6 +390,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             }),
             new TileLayer({
               title: 'OpenTopoMap',
+              shortTitle: 'OTM',
               type: 'base',
               visible: false,
               source: new XYZ({
@@ -417,10 +432,10 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         new LayerGroup({
           title: 'Overlays',
           minZoom: 6,
-          visible: false,
           layers: [
             new VectorLayer({
               title: 'OS Grid (WAB Squares)',
+              shortTitle: 'OSG',
               visible: false,
               style: function style(feature) {
                 return new Style({
@@ -475,6 +490,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           layers: [
             createLayerGroup(
               `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
+              'AONB',
               polygonStyleFunctionAONB,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
               null, // National Scenic Areas below
@@ -483,6 +499,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             new LayerGroup({
               title: `${legendBox(colorAONB)} National Scenic Areas`,
+              shortTitle: 'NSA',
               combine: true,
               visible: false,
               layers: [
@@ -491,6 +508,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             }),
             new LayerGroup({
               title: `${legendBox(colorNP)} National Parks`,
+              shortTitle: 'NP',
               combine: true,
               visible: false,
               layers: [
@@ -508,6 +526,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             }),
             createLayerGroup(
               `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
+              'SSSI',
               polygonStyleFunctionSSSI,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
@@ -516,6 +535,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             createLayerGroup(
               `${legendBox(colorSAC)} Special Areas of Conservation`,
+              'SAC',
               polygonStyleFunctionSAC,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
@@ -524,6 +544,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             createLayerGroup(
               `${legendBox(colorSPA)} Special Protection Areas`,
+              'SPA',
               polygonStyleFunctionSPA,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
@@ -532,6 +553,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             createLayerGroup(
               `${legendBox(colorCPK)} Country Parks`,
+              'CPK',
               polygonStyleFunctionCPK,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
@@ -539,6 +561,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             createLayerGroup(
               `${legendBox(colorLNR)} Local Nature Reserves`,
+              'LNR',
               polygonStyleFunctionLNR,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:lnr&',
@@ -547,6 +570,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             createLayerGroup(
               `${legendBox(colorNNR)} National Nature Reserves`,
+              'NNR',
               polygonStyleFunctionNNR,
               'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
@@ -554,6 +578,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
             ),
             new LayerGroup({
               title: `${legendBox(colorRSPB)} RSPB Reserves`,
+              shortTitle: 'RSPB',
               combine: true,
               layers: [
                 new VectorLayer({
@@ -575,6 +600,7 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
           ],
         }),
         new VectorLayer({
+          shortTitle: 'POTA',
           refUrl: 'https://pota.app/#/park/',
           minZoom: 6,
           style: pointStyleFunction,
@@ -596,6 +622,43 @@ fetch(`https://api.os.uk/maps/raster/v1/wmts?key=${apiKey}&service=WMTS&request=
         }),
       ],
     });
+
+    const link = new Link({params: ['x', 'y', 'z'], replace: true});
+    function layersLinkCallback(newValue) {
+      if (newValue) { // only update if no null
+        const layers = newValue.split(' ');
+        LayerSwitcher.forEachRecursive(map, (layer) => {
+          const shortTitle = layer.get('shortTitle');
+          if (layers.includes(shortTitle)) {
+            layer.setVisible(true);
+          } else if (shortTitle) {
+            layer.setVisible(false);
+          }
+        });
+      }
+    }
+    layersLinkCallback(link.track('layers', layersLinkCallback));
+
+    const activeLayers = new Collection();
+    LayerSwitcher.forEachRecursive(map, (layer) => {
+      const shortTitle = layer.get('shortTitle');
+      if (shortTitle) {
+        if (layer.getVisible()) {
+          activeLayers.push(shortTitle);
+        }
+        layer.on('change:visible', () => {
+          if (layer.getVisible()) {
+            activeLayers.push(shortTitle);
+          } else {
+            activeLayers.remove(shortTitle);
+          }
+        });
+      }
+    });
+    activeLayers.on('change:length', () => {
+      link.update('layers', activeLayers.getArray().join(' '));
+    });
+    map.addInteraction(link);
 
     // Close attribution on map move; open when layers change.
     const attribution = new Attribution({collapsible: true, collapsed: false});
