@@ -1,6 +1,6 @@
 {
   "name": "pota-gb-map",
-  "version": "1.0.0",
+  "license": "BSD-2-Clause",
   "scripts": {
     "start": "vite",
     "build": "vite build",
