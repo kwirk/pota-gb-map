@@ -62,10 +62,9 @@ const osGridPrefixes = [
   ['HL', 'HM', 'HN', 'HO', 'HP', 'JL', 'JM'],
 ];
 
-// Based on ONS mix/max county boundaries
-const extentEngland = transformExtent([-6.3021698, 49.92332077, 1.64949596, 55.30036926], 'EPSG:4326', projection27700);
-const extentScotland = transformExtent([-6.65721989, 55.09621811, -1.37344003, 60.50495148], 'EPSG:4326', projection27700);
-const extentWales = transformExtent([-4.90818024, 51.44837952, -2.89769006, 53.27944946], 'EPSG:4326', projection27700);
+const extentEngland = transformExtent([-6.302170, 49.923321, 1.867676, 55.801281], 'EPSG:4326', projection27700);
+const extentScotland = transformExtent([-7.888184, 54.600710, -0.571289, 60.951777], 'EPSG:4326', projection27700);
+const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
   dataProjection: projection27700,
