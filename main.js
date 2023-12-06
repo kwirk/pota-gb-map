@@ -400,34 +400,6 @@ const map = new Map({
         }),
       ],
     }),
-    new VectorLayer({
-      maxZoom: 6,
-      style: new Style({
-        text: new Text({
-          text: 'Zoom In',
-          font: '30px bold ui-rounded',
-          fill: new Fill({color: '#000000'}),
-          stroke: new Stroke({color: '#000000', width: 1}),
-        }),
-      }),
-      source: new VectorSource({
-        attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed&nbsp;by&nbsp;Steven&nbsp;Hiscocks&nbsp;M1SDH.</a>',
-        projection: projection27700,
-        format: GeoJSON27700,
-        strategy: bboxStrategy,
-        loader: function loader(extent, resolution, projection, success) {
-          this.clear();
-          this.addFeature(
-            new Feature({
-              geometry: new Point([
-                (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
-              ]),
-            }),
-          );
-          success();
-        },
-      }),
-    }),
     new LayerGroup({
       title: 'Overlays',
       minZoom: 6,
@@ -748,6 +720,39 @@ map.on('singleclick', (event) => {
     }
   });
   if (content) { popup.show(event.coordinate, content); }
+});
+
+const zoomInLayer = new VectorLayer({
+  maxZoom: 6,
+  style: new Style({
+    text: new Text({
+      text: 'Zoom In',
+      font: '30px bold ui-rounded',
+      fill: new Fill({color: '#000000'}),
+      stroke: new Stroke({color: '#000000', width: 1}),
+    }),
+  }),
+  source: new VectorSource({
+    attributions: '<a href="https://github.com/kwirk/pota-gb-map" target="_blank">Developed&nbsp;by&nbsp;Steven&nbsp;Hiscocks&nbsp;M1SDH.</a>',
+    projection: projection27700,
+    format: GeoJSON27700,
+    strategy: bboxStrategy,
+    loader: function loader(extent, resolution, projection, success) {
+      this.clear();
+      this.addFeature(
+        new Feature({
+          geometry: new Point([
+            (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
+          ]),
+        }),
+      );
+      success();
+    },
+  }),
+});
+map.addLayer(zoomInLayer);
+map.on('movestart', () => {
+  zoomInLayer.getSource().refresh();
 });
 
 const source = new VectorSource();
