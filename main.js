@@ -116,7 +116,7 @@ function createTextStyle(feature, resolution, text, color) {
   });
 }
 
-function pointStyleFunction(feature, resolution) {
+function pointStyleFunction(feature, resolution, color) {
   let text = feature.get('reference');
   if (resolution < 40) {
     text += ` ${feature.get('name')}`;
@@ -124,10 +124,10 @@ function pointStyleFunction(feature, resolution) {
   return new Style({
     image: new CircleStyle({
       radius: 5,
-      fill: new Fill({color: '#FFFF00'}),
+      fill: new Fill({color: color}),
       stroke: new Stroke({color: '#000000', width: 1}),
     }),
-    text: createTextStyle(feature, resolution, text, '#FFFF00'),
+    text: createTextStyle(feature, resolution, text, color),
   });
 }
 
@@ -137,6 +137,10 @@ function colorOpacity(color) {
 
 function legendBox(color) {
   return `<div class="box" style="background-color: ${colorOpacity(color)}; border-color: ${color}"></div>`;
+}
+
+function legendDot(color) {
+  return `<div class="dot" style="background-color: ${color}"></div>`;
 }
 
 function polygonStyleFunction(feature, resolution, text, color) {
@@ -595,26 +599,93 @@ const map = new Map({
         }),
       ],
     }),
-    new VectorLayer({
-      shortTitle: 'POTA',
-      refUrl: 'https://pota.app/#/park/',
-      minZoom: 6,
-      style: pointStyleFunction,
-      source: new VectorSource({
-        attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
-        strategy: bboxStrategy,
-        url: (extent) => {
-          let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
-          newExtent = [
-            Math.floor(newExtent[0] * 10) / 10,
-            Math.floor(newExtent[1] * 10) / 10,
-            Math.ceil(newExtent[2] * 10) / 10,
-            Math.ceil(newExtent[3] * 10) / 10];
-          return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
-        },
-        projection: projection27700,
-        format: new GeoJSONReference({featureProjection: projection27700}),
-      }),
+    new LayerGroup({
+      title: 'Programmes',
+      layers: [
+        new VectorLayer({
+          title: `${legendDot('#00FF00')} World Wide Flora & Fauna`,
+          shortTitle: 'WWFF',
+          refUrl: 'https://wwff.co/directory/?showRef=',
+          minZoom: 6,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, '#00FF00'),
+          visible: false,
+          source: new VectorSource({
+            attributions: 'WWFF&nbsp;references:&nbsp;<a href="https://wwff.co/" target="_blank">WWFF</a>;&nbsp;<a href="https://wwff.co/" target="_blank">GxFF</a>;&nbsp;<a href="https://www.cqgma.org/" target="_blank">GMA</a>.',
+            strategy: () => [extentWales, extentScotland, extentEngland], // "all" like strategy
+            loader: function loader(extent, resolution, projection, success, failure) {
+              const vectorSource = this;
+              let wwffCode = '';
+              if (extent === extentWales) {
+                wwffCode = 'GW';
+              } else if (extent === extentScotland) {
+                wwffCode = 'GM';
+              } else if (extent === extentEngland) {
+                wwffCode = 'G';
+              } else {
+                failure(); // shouldn't ever get here
+                return;
+              }
+              const url = `https://www.cqgma.org/mvs/aaawff.php?r=${wwffCode}`;
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', url);
+              function onError() {
+                vectorSource.removeLoadedExtent(extent);
+                failure();
+              }
+              xhr.onerror = onError;
+              xhr.onload = () => {
+                const features = [];
+                if (xhr.status === 200) {
+                  xhr.responseText.split('|').forEach((item) => {
+                    const subitems = item.split('*');
+                    if (subitems[2] && subitems[1]) {
+                      const feature = new Feature({
+                        geometry: new Point(
+                          fromLonLat(
+                            [subitems[2], subitems[1]],
+                            projection27700,
+                          ),
+                        ),
+                        reference: subitems[0],
+                        name: subitems[3],
+                      });
+                      feature.setId(subitems[0]);
+                      features.push(feature);
+                    }
+                  });
+                  vectorSource.addFeatures(features);
+                  success(features);
+                } else {
+                  onError();
+                }
+              };
+              xhr.send();
+            },
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendDot('#FFFF00')} Parks on the Air`,
+          shortTitle: 'POTA',
+          refUrl: 'https://pota.app/#/park/',
+          minZoom: 6,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, '#FFFF00'),
+          source: new VectorSource({
+            attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
+            projection: projection27700,
+            format: new GeoJSONReference({featureProjection: projection27700}),
+            strategy: bboxStrategy,
+            url: (extent) => {
+              let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+              newExtent = [
+                Math.floor(newExtent[0] * 10) / 10,
+                Math.floor(newExtent[1] * 10) / 10,
+                Math.ceil(newExtent[2] * 10) / 10,
+                Math.ceil(newExtent[3] * 10) / 10];
+              return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
+            },
+          }),
+        }),
+      ],
     }),
   ],
 });
