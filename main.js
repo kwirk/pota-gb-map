@@ -459,8 +459,8 @@ const map = new Map({
     new LayerGroup({
       title: 'Designations',
       layers: [
-        createLayerGroup(
-          `${legendBox(colorAONB)} Areas of Outstanding Natural Beauty`,
+        createLayerGroup( // Previously Areas of Outstanding Natural Beauty
+          `${legendBox(colorAONB)} National Landscapes`,
           'AONB',
           polygonStyleFunctionAONB,
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
