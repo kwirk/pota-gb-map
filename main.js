@@ -62,6 +62,53 @@ const osGridPrefixes = [
   ['HL', 'HM', 'HN', 'HO', 'HP', 'JL', 'JM'],
 ];
 
+function getMaidenheadGridFeatures27700(extent, level) {
+  const features = [];
+  const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+  let step = 10;
+  for (let n = 1; n < level; n += 1) {
+    step /= (n % 2) ? 10 : 24;
+  }
+  const x0 = Math.floor(newExtent[0] / (2 * step)) * (2 * step);
+  const y0 = Math.floor(newExtent[1] / step) * step;
+  const xN = Math.ceil(newExtent[2] / (2 * step)) * (2 * step);
+  const yN = Math.ceil(newExtent[3] / step) * step;
+  for (let x = x0; x < xN; x += 2 * step) {
+    for (let y = y0; y < yN; y += step) {
+      let xg = (x + 180) / 20;
+      let yg = (y + 90) / 10;
+      let grid = String.fromCharCode(65 + Math.floor(xg));
+      grid += String.fromCharCode(65 + Math.floor(yg));
+      for (let n = 1; n < level; n += 1) {
+        if (n % 2) {
+          xg = (xg - Math.floor(xg) + 1e-6) * 10;
+          yg = (yg - Math.floor(yg) + 1e-6) * 10;
+          grid += Math.floor(xg).toString();
+          grid += Math.floor(yg).toString();
+        }
+        if (!(n % 2)) {
+          xg = (xg - Math.floor(xg) + 1e-6) * 24;
+          yg = (yg - Math.floor(yg) + 1e-6) * 24;
+          grid += String.fromCharCode(65 + Math.floor(xg));
+          grid += String.fromCharCode(65 + Math.floor(yg));
+        }
+      }
+      const feature = new Feature({
+        geometry: new Polygon(
+          [[[x, y],
+            [x + (2 * step), y],
+            [x + (2 * step), y + step],
+            [x, y + step],
+            [x, y]]],
+        ).transform('EPSG:4326', projection27700),
+      });
+      feature.setId(grid);
+      features.push(feature);
+    }
+  }
+  return features;
+}
+
 const extentEngland = transformExtent([-6.302170, 49.923321, 1.867676, 55.801281], 'EPSG:4326', projection27700);
 const extentScotland = transformExtent([-7.888184, 54.600710, -0.571289, 60.951777], 'EPSG:4326', projection27700);
 const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700], 'EPSG:4326', projection27700);
@@ -402,12 +449,12 @@ const map = new Map({
     }),
     new LayerGroup({
       title: 'Overlays',
-      minZoom: 6,
       layers: [
         new VectorLayer({
           title: 'OS Grid (WAB Squares)',
           shortTitle: 'OSG',
           visible: false,
+          minZoom: 6,
           style: function style(feature) {
             return new Style({
               stroke: new Stroke({
@@ -449,6 +496,34 @@ const map = new Map({
                   features.push(feature);
                 }
               }
+              this.addFeatures(features);
+              success(features);
+            },
+          }),
+        }),
+        new VectorLayer({
+          title: 'Maidenhead Grid',
+          shortTitle: 'MHG',
+          visible: false,
+          minZoom: 6,
+          style: (feature) => new Style({
+            stroke: new Stroke({
+              color: 'rgba(255, 100, 100, 0.2)',
+              width: 3,
+            }),
+            text: new Text({
+              text: feature.getId(),
+              font: '25px bold ui-rounded',
+              stroke: new Stroke({color: 'rgba(255, 100, 100, 0.5)', width: 2}),
+              fill: null,
+            }),
+          }),
+          source: new VectorSource({
+            projection: projection27700,
+            overlaps: false,
+            strategy: bboxStrategy,
+            loader: function loader(extent, resolution, projection, success) {
+              const features = getMaidenheadGridFeatures27700(extent, 3);
               this.addFeatures(features);
               success(features);
             },
