@@ -10,7 +10,7 @@ It also includes an overlay for OS Grid squares for [Work All Britain (WAB)](htt
 
 The map must be zoomed into a minimum level for data to appear. Also, by default, larger layers such as AONB and SSSI are disable due to their larger size, but can be toggled on by the layer controls (top right).
 
-Currently limited to Great Britain (England, Scotland and Wales), but looking to expand with additional sources are found.
+Currently limited to Great Britain (England, Scotland and Wales) and Northern Ireland.
 
 ## License
 Copyright (C) 2023 Steven Hiscocks (M1SDH)

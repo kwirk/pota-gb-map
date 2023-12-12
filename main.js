@@ -38,6 +38,12 @@ import Link from 'ol/interaction/Link';
 import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 
+import NI_AONB from './data/NI_AONB.json?url';
+import NI_ASSI from './data/NI_ASSI.json?url'
+import NI_NNR from './data/NI_NNR.json?url';
+import NI_SAC from './data/NI_SAC.json?url'
+import NI_SPA from './data/NI_SPA.json?url'
+
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
 register(proj4);
@@ -112,6 +118,7 @@ function getMaidenheadGridFeatures27700(extent, level) {
 const extentEngland = transformExtent([-6.302170, 49.923321, 1.867676, 55.801281], 'EPSG:4326', projection27700);
 const extentScotland = transformExtent([-7.888184, 54.600710, -0.571289, 60.951777], 'EPSG:4326', projection27700);
 const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700], 'EPSG:4326', projection27700);
+const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
   dataProjection: projection27700,
@@ -125,6 +132,8 @@ class GeoJSONObjectID extends GeoJSON {
       feature.setId(feature.get('OBJECTID'));
     } else if (feature.get('fid')) {
       feature.setId(feature.get('fid'));
+    } else if (feature.get('Id')) {
+      feature.setId(feature.get('Id'));
     }
     return feature;
   }
@@ -344,13 +353,17 @@ function createVectorLayerScotGov(stylefunc, layer) {
 function vectorLayerEngland(stylefunc, url) {
   return new VectorLayer({
     minZoom: 6,
+    extent: extentEngland,
     style: stylefunc,
     source: new VectorSource({
       attributions: 'Boundaries:&nbsp;©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: new EsriJSON(),
       projection: projection27700,
       strategy: (extent) => (
-        (intersects(extent, extentEngland) && !contains(extentWales, extent)) ? [extent] : []),
+        (intersects(extent, extentEngland)
+         && !contains(extentWales, extent)
+         && !contains(extentScotland, extent)
+         && !contains(extentNorthernIreland, extent)) ? [extent] : []),
       url: (extent) => `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
         + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
         + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=*&outSR=27700',
@@ -368,6 +381,21 @@ function vectorLayerWales(stylefunc, url) {
   layer.getSource().setAttributions('Boundaries:&nbsp;©&nbsp;Natural&nbsp;Resources&nbsp;Wales&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
   return layer;
 }
+function vectorLayerNorthernIreland(stylefunc, url) {
+  return new VectorLayer({
+    minZoom: 6,
+    extent: extentNorthernIreland,
+    style: stylefunc,
+    source: new VectorSource({
+      attributions: 'Boundaries:&nbsp;©&nbsp;NIEA&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
+      format: GeoJSONObjectID27700,
+      projection: projection27700,
+      strategy: (extent) => (
+        intersects(extent, extentNorthernIreland) ? [extentNorthernIreland] : []),
+      url: url,
+    }),
+  });
+}
 
 function createLayerGroup(
   title,
@@ -376,6 +404,7 @@ function createLayerGroup(
   urlEngland,
   urlScotland,
   urlWales,
+  urlNorthernIreland,
   visible = true,
 ) {
   const layers = [];
@@ -387,6 +416,9 @@ function createLayerGroup(
   }
   if (urlWales) {
     layers.push(vectorLayerWales(stylefunc, urlWales));
+  }
+  if (urlNorthernIreland) {
+    layers.push(vectorLayerNorthernIreland(stylefunc, urlNorthernIreland));
   }
   return new LayerGroup({
     title: title,
@@ -535,12 +567,13 @@ const map = new Map({
       title: 'Designations',
       layers: [
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
-          `${legendBox(colorAONB)} National Landscapes`,
+          `${legendBox(colorAONB)} National Landscapes / AONB`,
           'AONB',
           polygonStyleFunctionAONB,
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query?',
           null, // National Scenic Areas below
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_AONB&',
+          NI_AONB,
           false,
         ),
         new LayerGroup({
@@ -577,6 +610,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sssi&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SSSI&',
+          NI_ASSI,
           false,
         ),
         createLayerGroup(
@@ -586,6 +620,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:sac&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SAC&',
+          NI_SAC,
           false,
         ),
         createLayerGroup(
@@ -595,6 +630,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Special_Protection_Areas_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:spa&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_SPA&',
+          NI_SPA,
           false,
         ),
         createLayerGroup(
@@ -604,6 +640,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Country_Parks_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:cpk&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=geonode:country_parks&',
+          null,
         ),
         createLayerGroup(
           `${legendBox(colorLNR)} Local Nature Reserves`,
@@ -612,6 +649,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:lnr&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_LNR&',
+          null,
           false,
         ),
         createLayerGroup(
@@ -621,6 +659,7 @@ const map = new Map({
           'https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query?',
           'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:nnr&',
           'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NNR&',
+          NI_NNR,
         ),
         new LayerGroup({
           title: `${legendBox(colorRSPB)} RSPB Reserves`,
@@ -657,11 +696,14 @@ const map = new Map({
           visible: false,
           source: new VectorSource({
             attributions: 'WWFF&nbsp;references:&nbsp;<a href="https://wwff.co/" target="_blank">WWFF</a>;&nbsp;<a href="https://wwff.co/" target="_blank">GxFF</a>;&nbsp;<a href="https://www.cqgma.org/" target="_blank">GMA</a>.',
-            strategy: () => [extentWales, extentScotland, extentEngland], // "all" like strategy
+            strategy: () => [ // "all" like strategy
+              extentWales, extentScotland, extentEngland, extentNorthernIreland],
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
               let wwffCode = '';
-              if (extent === extentWales) {
+              if (extent === extentNorthernIreland) {
+                wwffCode = 'GI';
+              } else if (extent === extentWales) {
                 wwffCode = 'GW';
               } else if (extent === extentScotland) {
                 wwffCode = 'GM';
