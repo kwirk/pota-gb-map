@@ -41,8 +41,9 @@ import Popup from 'ol-popup';
 import NI_AONB from './data/NI_AONB.json?url';
 import NI_ASSI from './data/NI_ASSI.json?url'
 import NI_NNR from './data/NI_NNR.json?url';
-import NI_SAC from './data/NI_SAC.json?url'
-import NI_SPA from './data/NI_SPA.json?url'
+import NI_SAC from './data/NI_SAC.json?url';
+import NI_SPA from './data/NI_SPA.json?url';
+import BOTA from './data/BOTA.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -159,35 +160,43 @@ class EsriJSONObjectID extends EsriJSON {
 }
 
 // Styles
-function createTextStyle(feature, resolution, text, color) {
+function createTextStyle(feature, resolution, text, color, offset=15) {
   return new Text({
     text: text,
     font: 'bold ui-rounded',
     textAlign: 'center',
     fill: new Fill({color: '#000000'}),
     stroke: new Stroke({color: color, width: 1}),
-    offsetY: 15,
+    offsetY: offset,
     overflow: (resolution < 15),
-  });
-}
-
-function pointStyleFunction(feature, resolution, color) {
-  let text = feature.get('reference');
-  if (resolution < 40) {
-    text += ` ${feature.get('name')}`;
-  }
-  return new Style({
-    image: new CircleStyle({
-      radius: 5,
-      fill: new Fill({color: color}),
-      stroke: new Stroke({color: '#000000', width: 1}),
-    }),
-    text: createTextStyle(feature, resolution, text, color),
   });
 }
 
 function colorOpacity(color) {
   return color.replace(/[\d.]+\)$/g, '0.2)');
+}
+
+function pointStyleFunction(feature, resolution, color, radius) {
+  let text = feature.get('reference');
+  if (resolution < 40) {
+    text += ` ${feature.get('name')}`;
+  }
+  let circleRadius = 5;
+  let circleColor = color;
+  let textOffset = 15;
+  if (radius) {
+    circleRadius = radius;
+    circleColor = colorOpacity(color);
+    textOffset = 1.5;
+  }
+  return new Style({
+    image: new CircleStyle({
+      radius: circleRadius,
+      fill: new Fill({color: circleColor}),
+      stroke: new Stroke({color: '#000000', width: 1}),
+    }),
+    text: createTextStyle(feature, resolution, text, color, textOffset),
+  });
 }
 
 function legendBox(color) {
@@ -687,6 +696,18 @@ const map = new Map({
     new LayerGroup({
       title: 'Programmes',
       layers: [
+        new VectorLayer({
+          title: `${legendDot('rgba(122, 174, 0, 0.5)')} Bunkers on the Air`,
+          shortTitle: 'BOTA',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
+          source: new VectorSource({
+            attributions: 'BOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+            format: GeoJSON27700,
+            url: BOTA,
+          }),
+        }),
         new VectorLayer({
           title: `${legendDot('#00FF00')} World Wide Flora & Fauna`,
           shortTitle: 'WWFF',
