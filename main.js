@@ -44,6 +44,7 @@ import NI_NNR from './data/NI_NNR.json?url';
 import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
+import SOTA from './data/SOTA.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -706,6 +707,19 @@ const map = new Map({
             attributions: 'BOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
             format: GeoJSON27700,
             url: BOTA,
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendDot('rgba(122, 174, 255, 1)')} Summits on the Air`,
+          shortTitle: 'SOTA',
+          refUrl: 'https://www.sotadata.org.uk/en/summit/',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 255, 1)'),
+          source: new VectorSource({
+            attributions: 'SOTA&nbsp;references:<a href="https://www.sota.org.uk/" target="_blank">©&nbsp;Summits&nbsp;on&nbsp;the&nbsp;Air</a>',
+            format: GeoJSON27700,
+            url: SOTA,
           }),
         }),
         new VectorLayer({
