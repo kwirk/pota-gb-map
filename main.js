@@ -939,11 +939,16 @@ const popup = new Popup();
 map.addOverlay(popup);
 map.on('singleclick', (event) => {
   let content = '';
-  map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
-    if (layer.getVisible() && layer.get('refUrl')) {
+  map.forEachFeatureAtPixel(
+    event.pixel,
+    (feature, layer) => {
       content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
-    }
-  });
+    },
+    {
+      layerFilter: (layer) => layer.get('refUrl'),
+      hitTolerance: 2,
+    },
+  );
   if (content) { popup.show(event.coordinate, content); }
 });
 
