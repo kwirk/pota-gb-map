@@ -44,7 +44,6 @@ import NI_NNR from './data/NI_NNR.json?url';
 import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
-import SOTA from './data/SOTA.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -161,7 +160,7 @@ class EsriJSONObjectID extends EsriJSON {
 }
 
 // Styles
-function createTextStyle(feature, resolution, text, color, offset=15) {
+function createTextStyle(feature, resolution, text, color, offset = 15) {
   return new Text({
     text: text,
     font: 'bold ui-rounded',
@@ -437,6 +436,21 @@ function createLayerGroup(
     visible: visible,
     layers: layers,
   });
+}
+
+function countryStrategy(extent) {
+  const extents = [];
+  [extentNorthernIreland, extentWales, extentScotland, extentEngland].forEach(
+    (cExtent) => {
+      if (intersects(extent, cExtent)) {
+        if (cExtent === extentEngland) {
+          extents.push(extentWales); // Due to overlap
+        }
+        extents.push(cExtent);
+      }
+    },
+  );
+  return extents;
 }
 
 const map = new Map({
@@ -719,7 +733,67 @@ const map = new Map({
           source: new VectorSource({
             attributions: 'SOTA&nbsp;references:<a href="https://www.sota.org.uk/" target="_blank">©&nbsp;Summits&nbsp;on&nbsp;the&nbsp;Air</a>',
             format: GeoJSON27700,
-            url: SOTA,
+            strategy: countryStrategy,
+            loader: function loader(extent, resolution, projection, success, failure) {
+              const vectorSource = this;
+              let code = '';
+              if (extent === extentNorthernIreland) {
+                code = 'GI';
+              } else if (extent === extentWales) {
+                code = 'GW';
+              } else if (extent === extentScotland) {
+                code = 'GM';
+              } else if (extent === extentEngland) {
+                code = 'G';
+              } else {
+                failure(); // shouldn't ever get here
+                return;
+              }
+              const url = `https://api2.sota.org.uk/api/associations/${code}`;
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', url);
+              xhr.responseType = 'json';
+              function onError() {
+                vectorSource.removeLoadedExtent(extent);
+                failure();
+              }
+              xhr.onerror = onError;
+              xhr.onload = () => {
+                if (xhr.status === 200) {
+                  xhr.response.regions.forEach((region) => {
+                    const features = [];
+                    const rUrl = `https://api2.sota.org.uk/api/regions/${region.associationCode}/${region.regionCode}`;
+                    const rXhr = new XMLHttpRequest();
+                    rXhr.open('GET', rUrl);
+                    rXhr.responseType = 'json';
+                    rXhr.onerror = onError;
+                    rXhr.onload = () => {
+                      if (xhr.status === 200) {
+                        rXhr.response.summits.forEach((summit) => {
+                          const feature = new Feature({
+                            geometry: new Point(
+                              fromLonLat(
+                                [summit.longitude, summit.latitude],
+                                projection27700,
+                              ),
+                            ),
+                            reference: summit.summitCode,
+                            name: summit.name,
+                          });
+                          feature.setId(summit.summitCode);
+                          features.push(feature);
+                        });
+                        vectorSource.addFeatures(features);
+                      }
+                    };
+                    rXhr.send();
+                  });
+                } else {
+                  onError();
+                }
+              };
+              xhr.send();
+            },
           }),
         }),
         new VectorLayer({
@@ -731,8 +805,7 @@ const map = new Map({
           visible: false,
           source: new VectorSource({
             attributions: 'WWFF&nbsp;references:&nbsp;<a href="https://wwff.co/" target="_blank">WWFF</a>;&nbsp;<a href="https://wwff.co/" target="_blank">GxFF</a>;&nbsp;<a href="https://www.cqgma.org/" target="_blank">GMA</a>.',
-            strategy: () => [ // "all" like strategy
-              extentWales, extentScotland, extentEngland, extentNorthernIreland],
+            strategy: countryStrategy,
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
               let wwffCode = '';
