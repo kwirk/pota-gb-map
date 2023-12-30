@@ -590,6 +590,7 @@ const map = new Map({
           title: `${legendDot('#DDDDDD')} Trigpoints (pillar)`,
           shortTitle: 'TRIG',
           refUrl: 'https://trigpointing.uk/trig/',
+          visible: false,
           minZoom: 6,
           style: (feature, resolution) => pointStyleFunction(feature, resolution, '#DDDDDD'),
           source: new VectorSource({
