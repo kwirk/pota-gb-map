@@ -39,11 +39,12 @@ import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 
 import NI_AONB from './data/NI_AONB.json?url';
-import NI_ASSI from './data/NI_ASSI.json?url'
+import NI_ASSI from './data/NI_ASSI.json?url';
 import NI_NNR from './data/NI_NNR.json?url';
 import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
+import TRIGPOINTS from './data/trigpoints.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -585,6 +586,19 @@ const map = new Map({
             },
           }),
         }),
+        new VectorLayer({
+          title: `${legendDot('#DDDDDD')} Trigpoints (pillar)`,
+          shortTitle: 'TRIG',
+          refUrl: 'https://trigpointing.uk/trig/',
+          minZoom: 6,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, '#DDDDDD'),
+          source: new VectorSource({
+            attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
+            projection: projection27700,
+            format: GeoJSON27700,
+            url: TRIGPOINTS,
+          }),
+        }),
       ],
     }),
     new LayerGroup({
@@ -942,7 +956,13 @@ map.on('singleclick', (event) => {
   map.forEachFeatureAtPixel(
     event.pixel,
     (feature, layer) => {
-      content += `<a href="${layer.get('refUrl')}${feature.get('reference')}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
+      let url = layer.get('refUrl');
+      if (feature.get('refUrl')) {
+        url += feature.get('refUrl');
+      } else {
+        url += feature.get('reference');
+      }
+      content += `<a href="${url}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
     },
     {
       layerFilter: (layer) => layer.get('refUrl'),
