@@ -44,6 +44,7 @@ import NI_NNR from './data/NI_NNR.json?url';
 import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
+import HEMA from './data/HEMA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
@@ -736,6 +737,19 @@ const map = new Map({
             attributions: 'BOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
             format: GeoJSON27700,
             url: BOTA,
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendDot('rgba(218, 70, 255, 1)')} HuMPs Excl. Marilyns Award`,
+          shortTitle: 'HEMA',
+          refUrl: 'http://hema.org.uk/fullSummit.jsp?summitKey=',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(218, 70, 255, 1)'),
+          source: new VectorSource({
+            attributions: 'HEMA&nbsp;references:<a href="http://hema.org.uk/" target="_blank">©&nbsp;HEMA</a>',
+            format: GeoJSON27700,
+            url: HEMA,
           }),
         }),
         new VectorLayer({

@@ -5,7 +5,8 @@
 This provides a simple map with many GB land designations (e.g. SSSI, National Nature Reserves)
 with [Parks on the Air® (POTA)](https://parksontheair.com/),
 [World Wide Flora and Fauna (WWFF)](https://wwff.co/),
-[Summits on the Air (SOTA)](https://www.sota.org.uk/) and
+[Summits on the Air (SOTA)](https://www.sota.org.uk/),
+[HuMPs Excluding Marilyns Award](http://hema.org.uk/) and
 [UK Bunkers on the Air (UK BOTA)](https://bunkersontheair.org/)
 references overlaid to help with
 planning activities and identifying the correct boundaries.
