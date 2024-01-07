@@ -49,6 +49,7 @@ import TRIGPOINTS from './data/trigpoints.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
+proj4.defs('EPSG:29902', '+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +a=6377340.189 +rf=299.3249646 +towgs84=482.5,-130.6,564.6,-1.042,-0.214,-0.631,8.15 +units=m +no_defs +type=crs');
 register(proj4);
 const projection27700 = new Projection({
   code: 'EPSG:27700',
@@ -122,6 +123,7 @@ const extentEngland = transformExtent([-6.302170, 49.923321, 1.867676, 55.801281
 const extentScotland = transformExtent([-7.888184, 54.600710, -0.571289, 60.951777], 'EPSG:4326', projection27700);
 const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700], 'EPSG:4326', projection27700);
 const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
+const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
   dataProjection: projection27700,
@@ -509,7 +511,60 @@ const map = new Map({
       title: 'Overlays',
       layers: [
         new VectorLayer({
-          title: 'OS Grid (WAB Squares)',
+          title: 'Irish Grid (NI WAB Squares)',
+          shortTitle: 'IRG',
+          visible: false,
+          minZoom: 6,
+          extent: extentIreland,
+          style: function style(feature) {
+            return new Style({
+              stroke: new Stroke({
+                color: 'rgba(100, 100, 100, 0.2)',
+                width: 3,
+              }),
+              text: new Text({
+                text: feature.getId(),
+                font: '30px bold ui-rounded',
+                stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
+                fill: null,
+              }),
+            });
+          },
+          source: new VectorSource({
+            overlaps: false,
+            strategy: bboxStrategy,
+            loader: function loader(extent, number, projection, success) {
+              const features = [];
+              const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+              const newExtent = transformExtent(extent, projection27700, 'EPSG:29902');
+              const e0 = Math.max(Math.floor(newExtent[0] / 10000), 0);
+              const n0 = Math.max(Math.floor(newExtent[1] / 10000), 0);
+              const eN = Math.min(Math.ceil(newExtent[2] / 10000), 50);
+              const nN = Math.min(Math.ceil(newExtent[3] / 10000), 129);
+              for (let e = e0; e < eN + 1; e += 1) {
+                for (let n = n0; n < nN + 1; n += 1) {
+                  const prefix = alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
+                  const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
+                  const feature = new Feature({
+                    geometry: new Polygon(
+                      [[[e * 10000, n * 10000],
+                        [e * 10000 + 10000, n * 10000],
+                        [e * 10000 + 10000, n * 10000 + 10000],
+                        [e * 10000, n * 10000 + 10000],
+                        [e * 10000, n * 10000]]],
+                    ).transform('EPSG:29902', projection27700),
+                  });
+                  feature.setId(grid);
+                  features.push(feature);
+                }
+              }
+              this.addFeatures(features);
+              success(features);
+            },
+          }),
+        }),
+        new VectorLayer({
+          title: 'OS Grid (GB WAB Squares)',
           shortTitle: 'OSG',
           visible: false,
           minZoom: 6,
@@ -528,7 +583,6 @@ const map = new Map({
             });
           },
           source: new VectorSource({
-            projection: projection27700,
             overlaps: false,
             strategy: bboxStrategy,
             loader: function loader(extent, number, projection, success) {
