@@ -209,7 +209,7 @@ function pointStyleFunction(feature, resolution, color, radius) {
   let circleRadius = 5;
   let circleColor = color;
   let textOffset = 15;
-  if (radius) {
+  if (radius && radius > circleRadius) {
     circleRadius = radius;
     circleColor = colorOpacity(color);
     textOffset = 1.5;
@@ -512,7 +512,7 @@ function gridLoader(source, prefixFunc, extent, projection, success) {
 
 const OSMSource = new OSM({
   attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
-})
+});
 
 const map = new Map({
   target: 'map',
@@ -697,12 +697,12 @@ const map = new Map({
           }),
         }),
         new VectorLayer({
-          title: `${legendDot('#DDDDDD')} Trigpoints (pillar)`,
+          title: `${legendDot('rgba(221, 221, 221, 0.5)')} Trigpoints (pillar)`,
           shortTitle: 'TRIG',
           refUrl: 'https://trigpointing.uk/trig/',
           visible: false,
           minZoom: 6,
-          style: (feature, resolution) => pointStyleFunction(feature, resolution, '#DDDDDD'),
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(221, 221, 221, 1)', 30 / resolution),
           source: new VectorSource({
             attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
             projection: projection27700,
