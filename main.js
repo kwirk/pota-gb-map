@@ -16,7 +16,7 @@ import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
-import {containsExtent as contains, intersects} from 'ol/extent';
+import {containsExtent as contains, extend, intersects} from 'ol/extent';
 import {EsriJSON, GeoJSON} from 'ol/format';
 import {
   Circle as CircleStyle,
@@ -50,10 +50,11 @@ import TRIGPOINTS from './data/trigpoints.json?url';
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
 proj4.defs('EPSG:29902', '+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +a=6377340.189 +rf=299.3249646 +towgs84=482.5,-130.6,564.6,-1.042,-0.214,-0.631,8.15 +units=m +no_defs +type=crs');
+proj4.defs('EPSG:32630', '+proj=utm +zone=30 +datum=WGS84 +units=m +no_defs +type=crs');
 register(proj4);
 const projection27700 = new Projection({
   code: 'EPSG:27700',
-  extent: [-90607.34, -12247.02, 682220.39, 1247821.27],
+  extent: [-90607.34, -152247.02, 682220.39, 1247821.27],
 });
 
 const osGridPrefixes = [
@@ -123,6 +124,8 @@ const extentEngland = transformExtent([-6.302170, 49.923321, 1.867676, 55.801281
 const extentScotland = transformExtent([-7.888184, 54.600710, -0.571289, 60.951777], 'EPSG:4326', projection27700);
 const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700], 'EPSG:4326', projection27700);
 const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
+const extentJersey = transformExtent([-2.392273, 48.855967, -1.789261, 49.317255], 'EPSG:4326', projection27700);
+const extentGuernsey = transformExtent([-3.065808, 49.327176, -2.081909, 49.959632], 'EPSG:4326', projection27700);
 const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
@@ -164,6 +167,21 @@ class EsriJSONObjectID extends EsriJSON {
 }
 
 // Styles
+function gridStyle(feature) {
+  return new Style({
+    stroke: new Stroke({
+      color: 'rgba(100, 100, 100, 0.2)',
+      width: 3,
+    }),
+    text: new Text({
+      text: feature.getId(),
+      font: '30px bold ui-rounded',
+      stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
+      fill: null,
+    }),
+  });
+}
+
 function createTextStyle(feature, resolution, text, color, offset = 15) {
   return new Text({
     text: text,
@@ -457,6 +475,36 @@ function countryStrategy(extent) {
   return extents;
 }
 
+function gridLoader(source, prefixFunc, extent, projection, success) {
+  const features = [];
+  const newExtent = transformExtent(extent, projection27700, projection);
+  const e0 = Math.floor(newExtent[0] / 10000);
+  const n0 = Math.floor(newExtent[1] / 10000);
+  const eN = Math.ceil(newExtent[2] / 10000);
+  const nN = Math.ceil(newExtent[3] / 10000);
+  for (let e = e0; e < eN + 1; e += 1) {
+    for (let n = n0; n < nN + 1; n += 1) {
+      const prefix = prefixFunc(e, n);
+      if (prefix) {
+        const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
+        const feature = new Feature({
+          geometry: new Polygon(
+            [[[e * 10000, n * 10000],
+              [e * 10000 + 10000, n * 10000],
+              [e * 10000 + 10000, n * 10000 + 10000],
+              [e * 10000, n * 10000 + 10000],
+              [e * 10000, n * 10000]]],
+          ).transform(projection, projection27700),
+        });
+        feature.setId(grid);
+        features.push(feature);
+      }
+    }
+  }
+  source.addFeatures(features);
+  success(features);
+}
+
 const map = new Map({
   target: 'map',
   controls: [new Zoom(), new Rotate(), new ScaleLine()],
@@ -511,55 +559,54 @@ const map = new Map({
       title: 'Overlays',
       layers: [
         new VectorLayer({
+          title: 'CI MGRS Grid (CI WAB Squares)',
+          shortTitle: 'CIG',
+          visible: false,
+          minZoom: 6,
+          extent: extend(extentJersey, extentGuernsey),
+          style: gridStyle,
+          source: new VectorSource({
+            overlaps: false,
+            strategy: bboxStrategy,
+            loader: function loader(extent, resolution, projection, success) {
+              return gridLoader(
+                this,
+                (e, n) => {
+                  const eAlphabet = 'STUVWXYZ';
+                  const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
+                  const ePrefix = eAlphabet[Math.floor(e / 10) - 1];
+                  const nPrefix = nAlphabet[(Math.floor(n / 10) + 5) % 20]; // even zone 'F' start
+                  return ePrefix + nPrefix;
+                },
+                extent,
+                'EPSG:32630',
+                success,
+              );
+            },
+          }),
+        }),
+        new VectorLayer({
           title: 'Irish Grid (NI WAB Squares)',
           shortTitle: 'IRG',
           visible: false,
           minZoom: 6,
           extent: extentIreland,
-          style: function style(feature) {
-            return new Style({
-              stroke: new Stroke({
-                color: 'rgba(100, 100, 100, 0.2)',
-                width: 3,
-              }),
-              text: new Text({
-                text: feature.getId(),
-                font: '30px bold ui-rounded',
-                stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
-                fill: null,
-              }),
-            });
-          },
+          style: gridStyle,
           source: new VectorSource({
             overlaps: false,
             strategy: bboxStrategy,
-            loader: function loader(extent, number, projection, success) {
-              const features = [];
-              const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
-              const newExtent = transformExtent(extent, projection27700, 'EPSG:29902');
-              const e0 = Math.max(Math.floor(newExtent[0] / 10000), 0);
-              const n0 = Math.max(Math.floor(newExtent[1] / 10000), 0);
-              const eN = Math.min(Math.ceil(newExtent[2] / 10000), 50);
-              const nN = Math.min(Math.ceil(newExtent[3] / 10000), 129);
-              for (let e = e0; e < eN + 1; e += 1) {
-                for (let n = n0; n < nN + 1; n += 1) {
-                  const prefix = alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
-                  const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
-                  const feature = new Feature({
-                    geometry: new Polygon(
-                      [[[e * 10000, n * 10000],
-                        [e * 10000 + 10000, n * 10000],
-                        [e * 10000 + 10000, n * 10000 + 10000],
-                        [e * 10000, n * 10000 + 10000],
-                        [e * 10000, n * 10000]]],
-                    ).transform('EPSG:29902', projection27700),
-                  });
-                  feature.setId(grid);
-                  features.push(feature);
-                }
-              }
-              this.addFeatures(features);
-              success(features);
+            loader: function loader(extent, resolution, projection, success) {
+              return gridLoader(
+                this,
+                (e, n) => {
+                  if (e < 0) { return null; }
+                  const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+                  return alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
+                },
+                extent,
+                'EPSG:29902',
+                success,
+              );
             },
           }),
         }),
@@ -568,48 +615,25 @@ const map = new Map({
           shortTitle: 'OSG',
           visible: false,
           minZoom: 6,
-          style: function style(feature) {
-            return new Style({
-              stroke: new Stroke({
-                color: 'rgba(100, 100, 100, 0.2)',
-                width: 3,
-              }),
-              text: new Text({
-                text: feature.getId(),
-                font: '30px bold ui-rounded',
-                stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
-                fill: null,
-              }),
-            });
-          },
+          extent: extend(extentEngland, extentScotland),
+          style: gridStyle,
           source: new VectorSource({
             overlaps: false,
             strategy: bboxStrategy,
-            loader: function loader(extent, number, projection, success) {
-              const features = [];
-              const e0 = Math.max(Math.floor(extent[0] / 10000), 0);
-              const n0 = Math.max(Math.floor(extent[1] / 10000), 0);
-              const eN = Math.min(Math.ceil(extent[2] / 10000), 69);
-              const nN = Math.min(Math.ceil(extent[3] / 10000), 129);
-              for (let e = e0; e < eN + 1; e += 1) {
-                for (let n = n0; n < nN + 1; n += 1) {
-                  const prefix = osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
-                  const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
-                  const feature = new Feature({
-                    geometry: new Polygon(
-                      [[[e * 10000, n * 10000],
-                        [e * 10000 + 10000, n * 10000],
-                        [e * 10000 + 10000, n * 10000 + 10000],
-                        [e * 10000, n * 10000 + 10000],
-                        [e * 10000, n * 10000]]],
-                    ),
-                  });
-                  feature.setId(grid);
-                  features.push(feature);
-                }
-              }
-              this.addFeatures(features);
-              success(features);
+            loader: function loader(extent, resolution, projection, success) {
+              return gridLoader(
+                this,
+                (e, n) => {
+                  try {
+                    return osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
+                  } catch (error) {
+                    return null;
+                  }
+                },
+                extent,
+                projection,
+                success,
+              );
             },
           }),
         }),
