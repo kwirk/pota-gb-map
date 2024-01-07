@@ -6,10 +6,12 @@ import {
   Collection, Feature, Map, View,
 } from 'ol';
 import LayerGroup from 'ol/layer/Group';
+import ImageLayer from 'ol/layer/Image';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
+import RasterSource from 'ol/source/Raster';
 import XYZ from 'ol/source/XYZ';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import {bbox as bboxStrategy} from 'ol/loadingstrategy';
@@ -126,7 +128,7 @@ const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700]
 const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
 const extentJersey = transformExtent([-2.392273, 48.855967, -1.789261, 49.317255], 'EPSG:4326', projection27700);
 const extentGuernsey = transformExtent([-3.065808, 49.327176, -2.081909, 49.959632], 'EPSG:4326', projection27700);
-const extentIsleOfMan = transformExtent([-4.899902, 53.972864, -4.196777, 54.490138], 'EPSG:4326', projection27700)
+const extentIsleOfMan = transformExtent([-4.899902, 53.972864, -4.196777, 54.490138], 'EPSG:4326', projection27700);
 const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
@@ -508,6 +510,10 @@ function gridLoader(source, prefixFunc, extent, projection, success) {
   success(features);
 }
 
+const OSMSource = new OSM({
+  attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
+})
+
 const map = new Map({
   target: 'map',
   controls: [new Zoom(), new Rotate(), new ScaleLine()],
@@ -525,6 +531,7 @@ const map = new Map({
           title: 'Ordnance Survey',
           shortTitle: 'OS',
           type: 'base',
+          visible: false,
           extent: projection27700.getExtent(),
           source: new XYZ({
             attributions: 'Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
@@ -536,14 +543,35 @@ const map = new Map({
             url: `https://api.os.uk/maps/raster/v1/zxy/Light_27700/{z}/{x}/{y}.png?key=${import.meta.env.VITE_OS_APIKEY}`,
           }),
         }),
+        new ImageLayer({
+          title: 'OSM (Greyscale)',
+          shortTitle: 'OSMG',
+          type: 'base',
+          source: new RasterSource({
+            sources: [OSMSource],
+            operation: (pixels) => {
+              const pixel = pixels[0];
+
+              const r = pixel[0];
+              const g = pixel[1];
+              const b = pixel[2];
+
+              const v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+              pixel[0] = v; // Red
+              pixel[1] = v; // Green
+              pixel[2] = v; // Blue
+
+              return pixel;
+            },
+          }),
+        }),
         new TileLayer({
           title: 'OSM',
           shortTitle: 'OSM',
           type: 'base',
           visible: false,
-          source: new OSM({
-            attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
-          }),
+          source: OSMSource,
         }),
         new TileLayer({
           title: 'OpenTopoMap',
