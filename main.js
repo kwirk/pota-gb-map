@@ -126,6 +126,7 @@ const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700]
 const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
 const extentJersey = transformExtent([-2.392273, 48.855967, -1.789261, 49.317255], 'EPSG:4326', projection27700);
 const extentGuernsey = transformExtent([-3.065808, 49.327176, -2.081909, 49.959632], 'EPSG:4326', projection27700);
+const extentIsleOfMan = transformExtent([-4.899902, 53.972864, -4.196777, 54.490138], 'EPSG:4326', projection27700)
 const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
 const GeoJSON27700 = new GeoJSON({
@@ -462,12 +463,13 @@ function createLayerGroup(
 
 function countryStrategy(extent) {
   const extents = [];
-  [extentGuernsey, extentJersey, extentNorthernIreland,
+  [extentGuernsey, extentJersey, extentIsleOfMan, extentNorthernIreland,
     extentWales, extentScotland, extentEngland].forEach(
     (cExtent) => {
       if (intersects(extent, cExtent)) {
         if (cExtent === extentEngland) {
           extents.push(extentWales); // Due to overlap
+          extents.push(extentIsleOfMan);
         }
         extents.push(cExtent);
       }
@@ -849,6 +851,8 @@ const map = new Map({
                 code = 'GU';
               } else if (extent === extentJersey) {
                 code = 'GJ';
+              } else if (extent === extentIsleOfMan) {
+                code = 'GD';
               } else if (extent === extentNorthernIreland) {
                 code = 'GI';
               } else if (extent === extentWales) {
@@ -925,6 +929,8 @@ const map = new Map({
                 wwffCode = 'GU';
               } else if (extent === extentJersey) {
                 wwffCode = 'GJ';
+              } else if (extent === extentIsleOfMan) {
+                wwffCode = 'GD';
               } else if (extent === extentNorthernIreland) {
                 wwffCode = 'GI';
               } else if (extent === extentWales) {
