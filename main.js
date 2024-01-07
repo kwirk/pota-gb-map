@@ -462,7 +462,8 @@ function createLayerGroup(
 
 function countryStrategy(extent) {
   const extents = [];
-  [extentNorthernIreland, extentWales, extentScotland, extentEngland].forEach(
+  [extentGuernsey, extentJersey, extentNorthernIreland,
+    extentWales, extentScotland, extentEngland].forEach(
     (cExtent) => {
       if (intersects(extent, cExtent)) {
         if (cExtent === extentEngland) {
@@ -844,7 +845,11 @@ const map = new Map({
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
               let code = '';
-              if (extent === extentNorthernIreland) {
+              if (extent === extentGuernsey) {
+                code = 'GU';
+              } else if (extent === extentJersey) {
+                code = 'GJ';
+              } else if (extent === extentNorthernIreland) {
                 code = 'GI';
               } else if (extent === extentWales) {
                 code = 'GW';
@@ -916,7 +921,11 @@ const map = new Map({
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
               let wwffCode = '';
-              if (extent === extentNorthernIreland) {
+              if (extent === extentGuernsey) {
+                wwffCode = 'GU';
+              } else if (extent === extentJersey) {
+                wwffCode = 'GJ';
+              } else if (extent === extentNorthernIreland) {
                 wwffCode = 'GI';
               } else if (extent === extentWales) {
                 wwffCode = 'GW';
