@@ -696,20 +696,6 @@ const map = new Map({
             },
           }),
         }),
-        new VectorLayer({
-          title: `${legendDot('rgba(221, 221, 221, 0.5)')} Trigpoints (pillar)`,
-          shortTitle: 'TRIG',
-          refUrl: 'https://trigpointing.uk/trig/',
-          visible: false,
-          minZoom: 6,
-          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(221, 221, 221, 1)', 30 / resolution),
-          source: new VectorSource({
-            attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
-            projection: projection27700,
-            format: GeoJSON27700,
-            url: TRIGPOINTS,
-          }),
-        }),
       ],
     }),
     new LayerGroup({
@@ -836,6 +822,20 @@ const map = new Map({
     new LayerGroup({
       title: 'Programmes',
       layers: [
+        new VectorLayer({
+          title: `${legendDot('rgba(221, 221, 221, 0.5)')} Trigpoints (WAB Award)`,
+          shortTitle: 'TRIG',
+          refUrl: 'https://trigpointing.uk/trig/',
+          visible: false,
+          minZoom: 6,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(221, 221, 221, 1)', 30 / resolution),
+          source: new VectorSource({
+            attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
+            projection: projection27700,
+            format: GeoJSON27700,
+            url: TRIGPOINTS,
+          }),
+        }),
         new VectorLayer({
           title: `${legendDot('rgba(122, 174, 0, 0.5)')} Bunkers on the Air`,
           shortTitle: 'BOTA',
