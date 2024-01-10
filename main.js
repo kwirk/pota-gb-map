@@ -616,7 +616,7 @@ const map = new Map({
           shortTitle: 'CIG',
           visible: false,
           minZoom: 6,
-          extent: extend(extentJersey, extentGuernsey),
+          extent: extend([...extentJersey], extentGuernsey),
           style: gridStyle,
           source: new VectorSource({
             overlaps: false,
@@ -668,7 +668,7 @@ const map = new Map({
           shortTitle: 'OSG',
           visible: false,
           minZoom: 6,
-          extent: extend(extentEngland, extentScotland),
+          extent: extend([...extentEngland], extentScotland),
           style: gridStyle,
           source: new VectorSource({
             overlaps: false,
