@@ -9,6 +9,7 @@ import LayerGroup from 'ol/layer/Group';
 import ImageLayer from 'ol/layer/Image';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
+import BingMaps from 'ol/source/BingMaps';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
 import RasterSource from 'ol/source/Raster';
@@ -514,6 +515,26 @@ const OSMSource = new OSM({
   attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
 });
 
+const bingGroup = new LayerGroup({
+  title: 'Bing Imagery',
+  shortTitle: 'BING',
+  type: 'base',
+  combine: true,
+  visible: false,
+  layers: [],
+});
+
+bingGroup.once('change:visible', () => {
+  // Callback to only set layer when used
+  // to avoid using API credits unnecessarily
+  bingGroup.getLayers().push(new TileLayer({
+    source: new BingMaps({
+      key: import.meta.env.VITE_BING_APIKEY,
+      imagerySet: 'Aerial',
+    }),
+  }));
+});
+
 const map = new Map({
   target: 'map',
   controls: [new Zoom(), new Rotate(), new ScaleLine()],
@@ -584,6 +605,7 @@ const map = new Map({
             url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
+        bingGroup,
       ],
     }),
     new LayerGroup({
