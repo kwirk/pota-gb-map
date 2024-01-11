@@ -132,6 +132,27 @@ const extentGuernsey = transformExtent([-3.065808, 49.327176, -2.081909, 49.9596
 const extentIsleOfMan = transformExtent([-4.899902, 53.972864, -4.196777, 54.490138], 'EPSG:4326', projection27700);
 const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
+function extentToCode(extent) {
+  switch (extent) {
+    case extentGuernsey:
+      return 'GU';
+    case extentJersey:
+      return 'GJ';
+    case extentIsleOfMan:
+      return 'GD';
+    case extentNorthernIreland:
+      return 'GI';
+    case extentWales:
+      return 'GW';
+    case extentScotland:
+      return 'GM';
+    case extentEngland:
+      return 'G';
+    default:
+      return null;
+  }
+}
+
 const GeoJSON27700 = new GeoJSON({
   dataProjection: projection27700,
   featureProjection: projection27700,
@@ -896,22 +917,8 @@ const map = new Map({
             strategy: countryStrategy,
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
-              let code = '';
-              if (extent === extentGuernsey) {
-                code = 'GU';
-              } else if (extent === extentJersey) {
-                code = 'GJ';
-              } else if (extent === extentIsleOfMan) {
-                code = 'GD';
-              } else if (extent === extentNorthernIreland) {
-                code = 'GI';
-              } else if (extent === extentWales) {
-                code = 'GW';
-              } else if (extent === extentScotland) {
-                code = 'GM';
-              } else if (extent === extentEngland) {
-                code = 'G';
-              } else {
+              const code = extentToCode(extent);
+              if (!code) {
                 failure(); // shouldn't ever get here
                 return;
               }
@@ -974,26 +981,12 @@ const map = new Map({
             strategy: countryStrategy,
             loader: function loader(extent, resolution, projection, success, failure) {
               const vectorSource = this;
-              let wwffCode = '';
-              if (extent === extentGuernsey) {
-                wwffCode = 'GU';
-              } else if (extent === extentJersey) {
-                wwffCode = 'GJ';
-              } else if (extent === extentIsleOfMan) {
-                wwffCode = 'GD';
-              } else if (extent === extentNorthernIreland) {
-                wwffCode = 'GI';
-              } else if (extent === extentWales) {
-                wwffCode = 'GW';
-              } else if (extent === extentScotland) {
-                wwffCode = 'GM';
-              } else if (extent === extentEngland) {
-                wwffCode = 'G';
-              } else {
+              const code = extentToCode(extent);
+              if (!code) {
                 failure(); // shouldn't ever get here
                 return;
               }
-              const url = `https://www.cqgma.org/mvs/aaawff.php?r=${wwffCode}`;
+              const url = `https://www.cqgma.org/mvs/aaawff.php?r=${code}`;
               const xhr = new XMLHttpRequest();
               xhr.open('GET', url);
               function onError() {
