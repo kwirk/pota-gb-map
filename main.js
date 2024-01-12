@@ -871,6 +871,8 @@ const map = new Map({
           refUrl: 'https://trigpointing.uk/trig/',
           visible: false,
           minZoom: 6,
+          updateWhileInteracting: true,
+          updateWhileAnimating: true,
           style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(221, 221, 221, 1)', 30 / resolution),
           source: new VectorSource({
             attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
@@ -884,6 +886,8 @@ const map = new Map({
           shortTitle: 'BOTA',
           minZoom: 6,
           visible: false,
+          updateWhileInteracting: true,
+          updateWhileAnimating: true,
           style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
           source: new VectorSource({
             attributions: 'BOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
