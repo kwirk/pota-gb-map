@@ -502,24 +502,32 @@ function countryStrategy(extent) {
   return extents;
 }
 
-function gridLoader(source, prefixFunc, extent, projection, success) {
+function gridLoader(source, prefixFunc, extent, projection, success, level) {
   const features = [];
   const newExtent = transformExtent(extent, projection27700, projection);
-  const e0 = Math.floor(newExtent[0] / 10000);
-  const n0 = Math.floor(newExtent[1] / 10000);
-  const eN = Math.ceil(newExtent[2] / 10000);
-  const nN = Math.ceil(newExtent[3] / 10000);
-  for (let e = e0; e < eN + 1; e += 1) {
-    for (let n = n0; n < nN + 1; n += 1) {
+  let step = 10;
+  for (let n = 1; n < level; n += 1) {
+    step /= 10;
+  }
+  const e0 = Math.floor(newExtent[0] / 10000 / step) * step;
+  const n0 = Math.floor(newExtent[1] / 10000 / step) * step;
+  const eN = Math.ceil(newExtent[2] / 10000 / step) * step;
+  const nN = Math.ceil(newExtent[3] / 10000 / step) * step;
+  for (let e = e0; e < eN + step; e += step) {
+    for (let n = n0; n < nN + step; n += step) {
       const prefix = prefixFunc(e, n);
       if (prefix) {
-        const grid = `${prefix}${Math.floor(e % 10)}${Math.floor(n % 10)}`;
+        let grid = `${prefix}`;
+        if (step < 10) {
+          grid += String(Math.floor((e % 10) / step + 1e-6)).padStart(level - 1, '0');
+          grid += String(Math.floor((n % 10) / step + 1e-6)).padStart(level - 1, '0');
+        }
         const feature = new Feature({
           geometry: new Polygon(
             [[[e * 10000, n * 10000],
-              [e * 10000 + 10000, n * 10000],
-              [e * 10000 + 10000, n * 10000 + 10000],
-              [e * 10000, n * 10000 + 10000],
+              [e * 10000 + 10000 * step, n * 10000],
+              [e * 10000 + 10000 * step, n * 10000 + 10000 * step],
+              [e * 10000, n * 10000 + 10000 * step],
               [e * 10000, n * 10000]]],
           ).transform(projection, projection27700),
         });
@@ -632,112 +640,131 @@ const map = new Map({
     new LayerGroup({
       title: 'Overlays',
       layers: [
-        new VectorLayer({
+        new LayerGroup({
           title: 'CI MGRS Grid (CI WAB Squares)',
           shortTitle: 'CIG',
           visible: false,
-          minZoom: 6,
-          extent: extend([...extentJersey], extentGuernsey),
-          style: gridStyle,
-          source: new VectorSource({
-            overlaps: false,
-            strategy: bboxStrategy,
-            loader: function loader(extent, resolution, projection, success) {
-              return gridLoader(
-                this,
-                (e, n) => {
-                  const eAlphabet = 'STUVWXYZ';
-                  const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
-                  const ePrefix = eAlphabet[Math.floor(e / 10) - 1];
-                  const nPrefix = nAlphabet[(Math.floor(n / 10) + 5) % 20]; // even zone 'F' start
-                  return ePrefix + nPrefix;
-                },
-                extent,
-                'EPSG:32630',
-                success,
-              );
-            },
-          }),
+          combine: true,
+          layers: [[1.5, 5], [5, 20]].map((zoom, level) => new VectorLayer({
+            minZoom: zoom[0],
+            maxZoom: zoom[1],
+            extent: extend([...extentJersey], extentGuernsey),
+            style: gridStyle,
+            source: new VectorSource({
+              overlaps: false,
+              strategy: bboxStrategy,
+              loader: function loader(extent, resolution, projection, success) {
+                return gridLoader(
+                  this,
+                  (e, n) => {
+                    const eAlphabet = 'STUVWXYZ';
+                    const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
+                    const ePrefix = eAlphabet[Math.floor(e / 10) - 1];
+                    const nPrefix = nAlphabet[(Math.floor(n / 10) + 5) % 20]; // even zone 'F' start
+                    return ePrefix + nPrefix;
+                  },
+                  extent,
+                  'EPSG:32630',
+                  success,
+                  level + 1,
+                );
+              },
+            }),
+          })),
         }),
-        new VectorLayer({
+        new LayerGroup({
           title: 'Irish Grid (NI WAB Squares)',
           shortTitle: 'IRG',
           visible: false,
-          minZoom: 6,
-          extent: extentIreland,
-          style: gridStyle,
-          source: new VectorSource({
-            overlaps: false,
-            strategy: bboxStrategy,
-            loader: function loader(extent, resolution, projection, success) {
-              return gridLoader(
-                this,
-                (e, n) => {
-                  if (e < 0) { return null; }
-                  const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
-                  return alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
-                },
-                extent,
-                'EPSG:29902',
-                success,
-              );
-            },
-          }),
+          combine: true,
+          layers: [[1.5, 5], [5, 20]].map((zoom, level) => new VectorLayer({
+            minZoom: zoom[0],
+            maxZoom: zoom[1],
+            extent: extentIreland,
+            style: gridStyle,
+            source: new VectorSource({
+              overlaps: false,
+              strategy: bboxStrategy,
+              loader: function loader(extent, resolution, projection, success) {
+                return gridLoader(
+                  this,
+                  (e, n) => {
+                    if (e < 0) { return null; }
+                    const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+                    return alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
+                  },
+                  extent,
+                  'EPSG:29902',
+                  success,
+                  level + 1,
+                );
+              },
+            }),
+          })),
         }),
-        new VectorLayer({
+        new LayerGroup({
           title: 'OS Grid (GB WAB Squares)',
           shortTitle: 'OSG',
           visible: false,
-          minZoom: 6,
-          extent: extend([...extentEngland], extentScotland),
-          style: gridStyle,
-          source: new VectorSource({
-            overlaps: false,
-            strategy: bboxStrategy,
-            loader: function loader(extent, resolution, projection, success) {
-              return gridLoader(
-                this,
-                (e, n) => {
-                  try {
-                    return osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
-                  } catch (error) {
-                    return null;
-                  }
-                },
-                extent,
-                projection,
-                success,
-              );
-            },
-          }),
+          combine: true,
+          layers: [[1.5, 5], [5, 20]].map((zoom, level) => new VectorLayer({
+            minZoom: zoom[0],
+            maxZoom: zoom[1],
+            extent: extend([...extentEngland], extentScotland),
+            style: gridStyle,
+            source: new VectorSource({
+              overlaps: false,
+              strategy: bboxStrategy,
+              loader: function loader(extent, resolution, projection, success) {
+                return gridLoader(
+                  this,
+                  (e, n) => {
+                    try {
+                      return osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
+                    } catch (error) {
+                      return null;
+                    }
+                  },
+                  extent,
+                  projection,
+                  success,
+                  level + 1,
+                );
+              },
+            }),
+          })),
         }),
-        new VectorLayer({
+        new LayerGroup({
           title: 'Maidenhead Grid',
           shortTitle: 'MHG',
           visible: false,
-          minZoom: 6,
-          style: (feature) => new Style({
-            stroke: new Stroke({
-              color: 'rgba(255, 100, 100, 0.2)',
-              width: 3,
+          combine: true,
+          layers: [[0, 2], [2, 6], [6, 20]].map((zoom, level) => new VectorLayer({
+            minZoom: zoom[0],
+            maxZoom: zoom[1],
+            style: (feature) => new Style({
+              stroke: new Stroke({
+                color: 'rgba(255, 100, 100, 0.2)',
+                width: 3,
+              }),
+              text: new Text({
+                text: feature.getId(),
+                font: '25px bold ui-rounded',
+                stroke: new Stroke({color: 'rgba(255, 100, 100, 0.5)', width: 2}),
+                fill: null,
+              }),
             }),
-            text: new Text({
-              text: feature.getId(),
-              font: '25px bold ui-rounded',
-              stroke: new Stroke({color: 'rgba(255, 100, 100, 0.5)', width: 2}),
-              fill: null,
+            source: new VectorSource({
+              projection: projection27700,
+              overlaps: false,
+              strategy: bboxStrategy,
+              loader: function loader(extent, resolution, projection, success) {
+                const features = getMaidenheadGridFeatures27700(extent, level + 1);
+                this.addFeatures(features);
+                success(features);
+              },
             }),
-          }),
-          source: new VectorSource({
-            projection: projection27700,
-            overlaps: false,
-            strategy: bboxStrategy,
-            loader: function loader(extent, resolution, projection, success) {
-              const features = getMaidenheadGridFeatures27700(extent, 3);
-              this.addFeatures(features);
-              success(features);
-            },
-          }),
+          })),
         }),
       ],
     }),
