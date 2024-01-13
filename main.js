@@ -200,7 +200,7 @@ function gridStyle(feature) {
     }),
     text: new Text({
       text: feature.getId(),
-      font: '30px bold ui-rounded',
+      font: 'bold 30px ui-rounded',
       stroke: new Stroke({color: 'rgba(100, 100, 100, 0.5)', width: 2}),
       fill: null,
     }),
@@ -749,7 +749,7 @@ const map = new Map({
               }),
               text: new Text({
                 text: feature.getId(),
-                font: '25px bold ui-rounded',
+                font: 'bold 25px ui-rounded',
                 stroke: new Stroke({color: 'rgba(255, 100, 100, 0.5)', width: 2}),
                 fill: null,
               }),
@@ -1159,7 +1159,7 @@ const zoomInLayer = new VectorLayer({
   style: new Style({
     text: new Text({
       text: 'Zoom In',
-      font: '30px bold ui-rounded',
+      font: '30px ui-rounded',
       fill: new Fill({color: '#000000'}),
       stroke: new Stroke({color: '#000000', width: 1}),
     }),
