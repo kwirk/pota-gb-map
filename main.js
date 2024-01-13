@@ -94,15 +94,16 @@ function getMaidenheadGridFeatures27700(extent, level) {
       let grid = String.fromCharCode(65 + Math.floor(xg));
       grid += String.fromCharCode(65 + Math.floor(yg));
       for (let n = 1; n < level; n += 1) {
+        xg = (xg + step * 1e-3) % 1;
+        yg = (yg + step * 1e-3) % 1;
         if (n % 2) {
-          xg = (xg - Math.floor(xg) + 1e-6) * 10;
-          yg = (yg - Math.floor(yg) + 1e-6) * 10;
+          xg *= 10;
+          yg *= 10;
           grid += Math.floor(xg).toString();
           grid += Math.floor(yg).toString();
-        }
-        if (!(n % 2)) {
-          xg = (xg - Math.floor(xg) + 1e-6) * 24;
-          yg = (yg - Math.floor(yg) + 1e-6) * 24;
+        } else {
+          xg *= 24;
+          yg *= 24;
           grid += String.fromCharCode(65 + Math.floor(xg));
           grid += String.fromCharCode(65 + Math.floor(yg));
         }
