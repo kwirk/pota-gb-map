@@ -505,30 +505,30 @@ function countryStrategy(extent) {
 function gridLoader(source, prefixFunc, extent, projection, success, level) {
   const features = [];
   const newExtent = transformExtent(extent, projection27700, projection);
-  let step = 10;
+  let step = 100000;
   for (let n = 1; n < level; n += 1) {
     step /= 10;
   }
-  const e0 = Math.floor(newExtent[0] / 10000 / step) * step;
-  const n0 = Math.floor(newExtent[1] / 10000 / step) * step;
-  const eN = Math.ceil(newExtent[2] / 10000 / step) * step;
-  const nN = Math.ceil(newExtent[3] / 10000 / step) * step;
+  const e0 = Math.floor(newExtent[0] / step) * step;
+  const n0 = Math.floor(newExtent[1] / step) * step;
+  const eN = Math.ceil(newExtent[2] / step) * step;
+  const nN = Math.ceil(newExtent[3] / step) * step;
   for (let e = e0; e < eN + step; e += step) {
     for (let n = n0; n < nN + step; n += step) {
       const prefix = prefixFunc(e, n);
       if (prefix) {
         let grid = `${prefix}`;
-        if (step < 10) {
-          grid += String(Math.floor((e % 10) / step + 1e-6)).padStart(level - 1, '0');
-          grid += String(Math.floor((n % 10) / step + 1e-6)).padStart(level - 1, '0');
+        if (level > 1) {
+          grid += String(Math.floor((e % 100000) / step)).padStart(level - 1, '0');
+          grid += String(Math.floor((n % 100000) / step)).padStart(level - 1, '0');
         }
         const feature = new Feature({
           geometry: new Polygon(
-            [[[e * 10000, n * 10000],
-              [e * 10000 + 10000 * step, n * 10000],
-              [e * 10000 + 10000 * step, n * 10000 + 10000 * step],
-              [e * 10000, n * 10000 + 10000 * step],
-              [e * 10000, n * 10000]]],
+            [[[e, n],
+              [e + step, n],
+              [e + step, n + step],
+              [e, n + step],
+              [e, n]]],
           ).transform(projection, projection27700),
         });
         feature.setId(grid);
@@ -659,8 +659,8 @@ const map = new Map({
                   (e, n) => {
                     const eAlphabet = 'STUVWXYZ';
                     const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
-                    const ePrefix = eAlphabet[Math.floor(e / 10) - 1];
-                    const nPrefix = nAlphabet[(Math.floor(n / 10) + 5) % 20]; // even zone 'F' start
+                    const ePrefix = eAlphabet[Math.floor(e / 100000) - 1];
+                    const nPrefix = nAlphabet[(Math.floor(n / 100000) + 5) % 20]; // zone 'F' start
                     return ePrefix + nPrefix;
                   },
                   extent,
@@ -691,7 +691,7 @@ const map = new Map({
                   (e, n) => {
                     if (e < 0) { return null; }
                     const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
-                    return alphabet[Math.floor((49 - n) / 10) * 5 + Math.floor(e / 10)];
+                    return alphabet[20 - Math.floor(n / 100000) * 5 + Math.floor(e / 100000)];
                   },
                   extent,
                   'EPSG:29902',
@@ -720,7 +720,7 @@ const map = new Map({
                   this,
                   (e, n) => {
                     try {
-                      return osGridPrefixes[Math.floor(n / 10)][Math.floor(e / 10)];
+                      return osGridPrefixes[Math.floor(n / 100000)][Math.floor(e / 100000)];
                     } catch (error) {
                       return null;
                     }
