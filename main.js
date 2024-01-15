@@ -1135,7 +1135,7 @@ LayerSwitcher.forEachRecursive(map, (layer) => {
 const popup = new Popup();
 map.addOverlay(popup);
 map.on('singleclick', (event) => {
-  let content = '';
+  const content = document.createElement('ul');
   map.forEachFeatureAtPixel(
     event.pixel,
     (feature, layer) => {
@@ -1145,14 +1145,21 @@ map.on('singleclick', (event) => {
       } else {
         url += feature.get('reference');
       }
-      content += `<a href="${url}" target="_blank">${feature.get('reference')} ${feature.get('name')}</a><br>`;
+      const refLink = document.createElement('a');
+      refLink.href = url;
+      refLink.textContent = `${feature.get('reference')} ${feature.get('name')}`;
+      refLink.target = '_blank';
+
+      const listItem = document.createElement('li');
+      listItem.appendChild(refLink);
+      content.appendChild(listItem);
     },
     {
       layerFilter: (layer) => layer.get('refUrl'),
       hitTolerance: 2,
     },
   );
-  if (content) { popup.show(event.coordinate, content); }
+  if (content.hasChildNodes()) { popup.show(event.coordinate, content); }
 });
 
 const zoomInLayer = new VectorLayer({
