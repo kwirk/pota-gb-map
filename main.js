@@ -40,6 +40,7 @@ import {
 import Link from 'ol/interaction/Link';
 import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
+import { LRUCache } from 'lru-cache';
 
 import NI_AONB from './data/NI_AONB.json?url';
 import NI_ASSI from './data/NI_ASSI.json?url';
@@ -224,6 +225,8 @@ function colorOpacity(color) {
   return color.replace(/[\d.]+\)$/g, '0.2)');
 }
 
+const circleImageStyleCache = new LRUCache({max: 32});
+
 function pointStyleFunction(feature, resolution, color, radius) {
   let text = feature.get('reference');
   if (resolution < 40) {
@@ -237,12 +240,19 @@ function pointStyleFunction(feature, resolution, color, radius) {
     circleColor = colorOpacity(color);
     textOffset = 1.5;
   }
-  return new Style({
-    image: new CircleStyle({
+
+  let circleImageStyle = circleImageStyleCache.get(`${circleRadius}${circleColor}`);
+  if (circleImageStyle === undefined) {
+    circleImageStyle = new CircleStyle({
       radius: circleRadius,
       fill: new Fill({color: circleColor}),
       stroke: new Stroke({color: '#000000', width: 1}),
-    }),
+    });
+    circleImageStyleCache.set(`${circleRadius}${circleColor}`, circleImageStyle);
+  }
+
+  return new Style({
+    image: circleImageStyle,
     text: createTextStyle(feature, resolution, text, color, textOffset),
   });
 }
