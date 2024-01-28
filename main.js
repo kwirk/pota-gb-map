@@ -920,7 +920,7 @@ const map = new Map({
           }),
         }),
         new VectorLayer({
-          title: `${legendDot('rgba(122, 174, 0, 0.5)')} Bunkers on the Air`,
+          title: `${legendDot('rgba(122, 174, 0, 0.5)')} UK Bunkers on the Air`,
           shortTitle: 'BOTA',
           minZoom: 6,
           visible: false,
@@ -928,7 +928,7 @@ const map = new Map({
           updateWhileAnimating: true,
           style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
           source: new VectorSource({
-            attributions: 'BOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+            attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
             format: GeoJSON27700,
             url: BOTA,
           }),
