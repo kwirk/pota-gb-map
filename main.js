@@ -904,14 +904,14 @@ const map = new Map({
       title: 'Programmes',
       layers: [
         new VectorLayer({
-          title: `${legendDot('rgba(221, 221, 221, 0.5)')} Trigpoints (WAB Award)`,
+          title: `${legendDot('rgba(255, 100, 82, 0.5)')} Trigpoints (WAB Award)`,
           shortTitle: 'TRIG',
           refUrl: 'https://trigpointing.uk/trig/',
           visible: false,
           minZoom: 6,
           updateWhileInteracting: true,
           updateWhileAnimating: true,
-          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(221, 221, 221, 1)', 30 / resolution),
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
           source: new VectorSource({
             attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
             projection: projection27700,
