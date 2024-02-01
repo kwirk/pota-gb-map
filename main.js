@@ -802,7 +802,7 @@ const map = new Map({
           ],
         }),
         new LayerGroup({
-          title: `${legendBox(colorNP)} National Parks`,
+          title: `${legendBox(colorNP)} National/Regional Parks`,
           shortTitle: 'NP',
           combine: true,
           visible: false,
@@ -817,6 +817,9 @@ const map = new Map({
             ),
             createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
             createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
+            vectorLayerScotland(
+              polygonStyleFunctionNP,
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:rp&')
           ],
         }),
         createLayerGroup(
