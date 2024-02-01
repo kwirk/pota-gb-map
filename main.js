@@ -819,7 +819,8 @@ const map = new Map({
             createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
             vectorLayerScotland(
               polygonStyleFunctionNP,
-              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:rp&')
+              'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:rp&',
+            ),
           ],
         }),
         createLayerGroup(
