@@ -1177,7 +1177,6 @@ map.on('singleclick', (event) => {
 });
 
 const zoomInLayer = new VectorLayer({
-  maxZoom: 6,
   style: new Style({
     text: new Text({
       text: 'Zoom In',
@@ -1193,13 +1192,15 @@ const zoomInLayer = new VectorLayer({
     strategy: bboxStrategy,
     loader: function loader(extent, resolution, projection, success) {
       this.clear();
-      this.addFeature(
-        new Feature({
-          geometry: new Point([
-            (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
-          ]),
-        }),
-      );
+      if (resolution >= 85) { // zoom > 6
+        this.addFeature(
+          new Feature({
+            geometry: new Point([
+              (extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2,
+            ]),
+          }),
+        );
+      }
       success();
     },
   }),
