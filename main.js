@@ -265,16 +265,16 @@ function legendDot(color) {
   return `<div class="dot" style="background-color: ${color}"></div>`;
 }
 
-function polygonStyleFunction(feature, resolution, text, color) {
+function polygonStyleFunction(feature, resolution, text, color, bStroke=false) {
   return new Style({
     stroke: new Stroke({
-      color: color,
-      width: 3,
+      color: bStroke ? '#000000': color,
+      width: bStroke ? 1: 3,
     }),
     fill: new Fill({
       color: colorOpacity(color),
     }),
-    text: createTextStyle(feature, resolution, text, color),
+    text: createTextStyle(feature, resolution, text, color, 0),
   });
 }
 
@@ -574,6 +574,28 @@ bingGroup.once('change:visible', () => {
     }),
   }));
 });
+
+let BOTAData = null;
+function withBOTAData(func, error) {
+  if (BOTAData !== null) {
+    func(BOTAData);
+  } else {
+    const url = BOTA;
+    const xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
+    xhr.open('GET', url);
+    xhr.onerror = error;
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        BOTAData = new GeoJSONReference({dataProjection: projection27700}).readFeaturesFromObject(xhr.response);
+        func(BOTAData);
+      } else {
+        error()
+      }
+    }
+    xhr.send();
+  }
+}
 
 const map = new Map({
   target: 'map',
@@ -923,19 +945,79 @@ const map = new Map({
             url: TRIGPOINTS,
           }),
         }),
-        new VectorLayer({
+        new LayerGroup({
           title: `${legendDot('rgba(122, 174, 0, 0.5)')} UK Bunkers on the Air`,
           shortTitle: 'BOTA',
-          minZoom: 6,
+          combine: true,
           visible: false,
-          updateWhileInteracting: true,
-          updateWhileAnimating: true,
-          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
-          source: new VectorSource({
-            attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
-            format: GeoJSON27700,
-            url: BOTA,
-          }),
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
+              source: new VectorSource({
+                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withBOTAData(
+                    (BOTAfeatures) => {
+                      vectorSource.addFeatures(BOTAfeatures);
+                      success(BOTAfeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    }
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(122, 174, 0, 1)', true),
+              source: new VectorSource({
+                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+                format: GeoJSON27700,
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withBOTAData(
+                    (BOTAfeatures) => {
+                      const features = [];
+                      BOTAfeatures.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null && geometry.intersectsExtent(extent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates()
+                          for (var i = 0; i < nSteps + 1; ++i) {
+                            const angle = (2 * Math.PI * (i/nSteps)) % (2 * Math.PI)
+                            const x = centerXY[0] + Math.cos(-angle) * 1000;
+                            const y = centerXY[1] + Math.sin(-angle) * 1000;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId());  // ID reset on clone
+                          features.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(features);
+                      success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    }
+                  );
+                },
+              }),
+            }),
+          ],
         }),
         new VectorLayer({
           title: `${legendDot('rgba(218, 70, 255, 1)')} HuMPs Excl. Marilyns Award`,
