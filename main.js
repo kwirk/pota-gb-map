@@ -542,6 +542,7 @@ function createLayerGroup(
     shortTitle: shortTitle,
     combine: true,
     visible: visible,
+    minZoom: 6,
     layers: layers,
   });
 }
@@ -902,6 +903,7 @@ const map = new Map({
           shortTitle: 'NSA',
           combine: true,
           visible: false,
+          minZoom: 6,
           layers: [
             createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
           ],
@@ -911,6 +913,7 @@ const map = new Map({
           shortTitle: 'NP',
           combine: true,
           visible: false,
+          minZoom: 6,
           layers: [
             vectorLayerEngland(
               polygonStyleFunctionNP,
@@ -990,6 +993,7 @@ const map = new Map({
           title: `${legendBox(colorRSPB)} RSPB Reserves`,
           shortTitle: 'RSPB',
           combine: true,
+          minZoom: 6,
           layers: [
             new VectorLayer({
               minZoom: 6,
