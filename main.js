@@ -19,7 +19,12 @@ import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
-import {buffer, containsExtent as contains, extend, intersects} from 'ol/extent';
+import {
+  buffer,
+  containsExtent as contains,
+  extend,
+  intersects,
+} from 'ol/extent';
 import {EsriJSON, GeoJSON} from 'ol/format';
 import {
   Circle as CircleStyle,
@@ -265,11 +270,11 @@ function legendDot(color) {
   return `<div class="dot" style="background-color: ${color}"></div>`;
 }
 
-function polygonStyleFunction(feature, resolution, text, color, bStroke=false) {
+function polygonStyleFunction(feature, resolution, text, color, bStroke = false) {
   return new Style({
     stroke: new Stroke({
-      color: bStroke ? '#000000': color,
-      width: bStroke ? 1: 3,
+      color: bStroke ? '#000000' : color,
+      width: bStroke ? 1 : 3,
     }),
     fill: new Fill({
       color: colorOpacity(color),
@@ -587,12 +592,14 @@ function withBOTAData(func, error) {
     xhr.onerror = error;
     xhr.onload = () => {
       if (xhr.status === 200) {
-        BOTAData = new GeoJSONReference({dataProjection: projection27700}).readFeaturesFromObject(xhr.response);
+        BOTAData = new GeoJSONReference({
+          dataProjection: projection27700,
+        }).readFeaturesFromObject(xhr.response);
         func(BOTAData);
       } else {
-        error()
+        error();
       }
-    }
+    };
     xhr.send();
   }
 }
@@ -969,7 +976,7 @@ const map = new Map({
                     () => {
                       vectorSource.removeLoadedExtent(extent);
                       failure();
-                    }
+                    },
                   );
                 },
               }),
@@ -987,22 +994,23 @@ const map = new Map({
                   withBOTAData(
                     (BOTAfeatures) => {
                       const features = [];
-                      const expandedExtent = buffer(extent, 1000);  // To capture centre point
+                      const expandedExtent = buffer(extent, 1000); // To capture centre point
                       BOTAfeatures.forEach((feature) => {
                         const geometry = feature.getGeometry();
-                        if (vectorSource.getFeatureById(feature.getId()) === null && geometry.intersectsExtent(expandedExtent)) {
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
                           const coordinates = [];
                           const nSteps = 128;
-                          const centerXY = geometry.getCoordinates()
-                          for (var i = 0; i < nSteps + 1; ++i) {
-                            const angle = (2 * Math.PI * (i/nSteps)) % (2 * Math.PI)
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
                             const x = centerXY[0] + Math.cos(-angle) * 1000;
                             const y = centerXY[1] + Math.sin(-angle) * 1000;
                             coordinates.push([x, y]);
                           }
                           const newFeature = feature.clone();
                           newFeature.setGeometry(new Polygon([coordinates]));
-                          newFeature.setId(feature.getId());  // ID reset on clone
+                          newFeature.setId(feature.getId()); // ID reset on clone
                           features.push(newFeature);
                         }
                       });
@@ -1012,7 +1020,7 @@ const map = new Map({
                     () => {
                       vectorSource.removeLoadedExtent(extent);
                       failure();
-                    }
+                    },
                   );
                 },
               }),
