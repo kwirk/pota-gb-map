@@ -19,7 +19,7 @@ import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
-import {containsExtent as contains, extend, intersects} from 'ol/extent';
+import {buffer, containsExtent as contains, extend, intersects} from 'ol/extent';
 import {EsriJSON, GeoJSON} from 'ol/format';
 import {
   Circle as CircleStyle,
@@ -981,16 +981,16 @@ const map = new Map({
               style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(122, 174, 0, 1)', true),
               source: new VectorSource({
                 attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
-                format: GeoJSON27700,
                 strategy: bboxStrategy,
                 loader: function loader(extent, resolution, projection, success, failure) {
                   const vectorSource = this;
                   withBOTAData(
                     (BOTAfeatures) => {
                       const features = [];
+                      const expandedExtent = buffer(extent, 1000);  // To capture centre point
                       BOTAfeatures.forEach((feature) => {
                         const geometry = feature.getGeometry();
-                        if (vectorSource.getFeatureById(feature.getId()) === null && geometry.intersectsExtent(extent)) {
+                        if (vectorSource.getFeatureById(feature.getId()) === null && geometry.intersectsExtent(expandedExtent)) {
                           const coordinates = [];
                           const nSteps = 128;
                           const centerXY = geometry.getCoordinates()
