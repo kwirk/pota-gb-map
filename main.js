@@ -29,6 +29,7 @@ import {EsriJSON, GeoJSON} from 'ol/format';
 import {
   Circle as CircleStyle,
   Fill,
+  RegularShape,
   Stroke,
   Style,
   Text,
@@ -55,6 +56,8 @@ import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
+import REPEATERS_2M from './data/repeaters_2m.json?url';
+import REPEATERS_70CM from './data/repeaters_70cm.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -262,12 +265,54 @@ function pointStyleFunction(feature, resolution, color, radius) {
   });
 }
 
+const triangleImageStyleCache = new LRUCache({max: 8});
+
+function triangleStyleFunction(feature, resolution, color) {
+  let text = feature.get('reference');
+  if (resolution < 40) {
+    text += ` ${feature.get('name')}`;
+  }
+
+  const analog = feature.get('name').split(' ')[1].includes('A');
+  const nModes = feature.get('name').split(' ')[1].length;
+  const digital = (nModes > 1 && analog) || (nModes > 0 && !analog);
+  const key = `${analog}${digital}${color}`;
+  let triangleImageStyle = triangleImageStyleCache.get(key);
+  if (triangleImageStyle === undefined) {
+    let rotation = 0;
+    if (digital) {
+      rotation += Math.PI / 2;
+      if (analog) {
+        rotation += Math.PI / 2;
+      }
+    }
+    triangleImageStyle = new RegularShape({
+      fill: new Fill({color: color}),
+      stroke: new Stroke({color: '#000000', width: 1}),
+      points: 3,
+      radius: 7,
+      rotation: rotation,
+    });
+    triangleImageStyleCache.set(key, triangleImageStyle);
+  }
+
+  return new Style({
+    image: triangleImageStyle,
+    text: createTextStyle(feature, resolution, text, color, 15),
+  });
+}
+
 function legendBox(color) {
   return `<div class="box" style="background-color: ${colorOpacity(color)}; border-color: ${color}"></div>`;
 }
 
 function legendDot(color) {
   return `<div class="dot" style="background-color: ${color}"></div>`;
+}
+
+function legendTriangle(color, rotate = 0) {
+  const transform = rotate === 0 ? '' : `transform: rotate(${rotate}deg);`;
+  return `<div class="triangle" style="${transform}"><div class="inner-triangle" style="border-color: transparent transparent ${color} transparent;"></div></div>`;
 }
 
 function polygonStyleFunction(feature, resolution, text, color, bStroke = false) {
@@ -805,6 +850,37 @@ const map = new Map({
               },
             }),
           })),
+        }),
+      ],
+    }),
+    new LayerGroup({
+      title: 'Repeaters',
+      layers: [
+        new VectorLayer({
+          title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 90)}${legendTriangle('#31eb85', 180)} 70cm (Analog/Digital/Mixed)`,
+          shortTitle: 'REP70CM',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
+          source: new VectorSource({
+            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
+            format: GeoJSON27700,
+            url: REPEATERS_70CM,
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 90)}${legendTriangle('#edb940', 180)} 2m (Analog/Digital/Mixed)`,
+          shortTitle: 'REP2M',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
+          source: new VectorSource({
+            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
+            format: GeoJSON27700,
+            url: REPEATERS_2M,
+          }),
         }),
       ],
     }),
