@@ -860,7 +860,7 @@ const map = new Map({
         new VectorLayer({
           title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 90)}${legendTriangle('#31eb85', 180)} 70cm (Analog/Digital/Mixed)`,
           shortTitle: 'REP70CM',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
@@ -873,7 +873,7 @@ const map = new Map({
         new VectorLayer({
           title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 90)}${legendTriangle('#edb940', 180)} 2m (Analog/Digital/Mixed)`,
           shortTitle: 'REP2M',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
