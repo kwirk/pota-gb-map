@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "lru-cache": "^10.2.0",
-    "ol": "^8.2.0",
+    "ol": "^9.0.0",
     "ol-layerswitcher": "^4.1.1",
     "ol-popup": "^5.1.0",
     "proj4": "^2.10.0"
