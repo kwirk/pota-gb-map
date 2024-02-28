@@ -229,8 +229,8 @@ function createTextStyle(feature, resolution, text, color, offset = 15) {
   });
 }
 
-function colorOpacity(color) {
-  return color.replace(/[\d.]+\)$/g, '0.2)');
+function colorOpacity(color, opacity = 0.2) {
+  return color.replace(/[\d.]+\)$/g, `${opacity})`);
 }
 
 const circleImageStyleCache = new LRUCache({max: 32});
@@ -313,6 +313,10 @@ function legendDot(color) {
 function legendTriangle(color, rotate = 0) {
   const transform = rotate === 0 ? '' : `transform: rotate(${rotate}deg);`;
   return `<div class="triangle" style="${transform}"><div class="inner-triangle" style="border-color: transparent transparent ${color} transparent;"></div></div>`;
+}
+
+function legendLine(color) {
+  return `<div class="line" style="background-color: ${color}"></div>`;
 }
 
 function polygonStyleFunction(feature, resolution, text, color, bStroke = false) {
@@ -433,6 +437,36 @@ function polygonStyleFunctionNP(feature, resolution) {
     text = feature.get('NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorNP);
+}
+
+function lineStyleFunction(feature, resolution, text, color) {
+  const width = Math.max(30.5 / resolution, 4);
+  return new Style({
+    stroke: new Stroke({
+      color: width > 4 ? colorOpacity(color, 0.5) : color,
+      width: width,
+    }),
+    text: new Text({
+      text: text,
+      font: 'bold ui-rounded',
+      placement: 'line',
+      repeat: 500,
+      maxAngle: 0,
+      fill: new Fill({color: '#000000'}),
+      stroke: new Stroke({color: color, width: 1}),
+      overflow: true,
+      offsetY: 15,
+    }),
+  });
+}
+
+const colorNT = 'rgba(115, 0, 0, 1)';
+function lineStyleFunctionNT(feature, resolution) {
+  let text = feature.get('NAME');
+  if (text === undefined) {
+    text = feature.get('Name');
+  }
+  return lineStyleFunction(feature, resolution, text, colorNT);
 }
 
 function createVectorLayer(stylefunc, url, extentCountry) {
@@ -888,6 +922,16 @@ const map = new Map({
     new LayerGroup({
       title: 'Designations',
       layers: [
+        createLayerGroup(
+          `${legendLine(colorNT)} National Trails`,
+          'NT',
+          lineStyleFunctionNT,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?',
+          null,
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&',
+          null,
+          false,
+        ),
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
           `${legendBox(colorAONB)} National Landscapes / AONB`,
           'AONB',
