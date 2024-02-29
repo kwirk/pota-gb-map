@@ -439,7 +439,7 @@ function polygonStyleFunctionNP(feature, resolution) {
   return polygonStyleFunction(feature, resolution, text, colorNP);
 }
 
-function lineStyleFunction(feature, resolution, text, color) {
+function lineStyleFunction(feature, resolution, text, color, overflow = true) {
   const width = Math.max(30.5 / resolution, 4);
   return new Style({
     stroke: new Stroke({
@@ -454,19 +454,24 @@ function lineStyleFunction(feature, resolution, text, color) {
       maxAngle: 0,
       fill: new Fill({color: '#000000'}),
       stroke: new Stroke({color: color, width: 1}),
-      overflow: true,
+      overflow: overflow,
       offsetY: 15,
     }),
   });
 }
 
 const colorNT = 'rgba(115, 0, 0, 1)';
-function lineStyleFunctionNT(feature, resolution) {
-  let text = feature.get('NAME');
-  if (text === undefined) {
-    text = feature.get('Name');
+function lineStyleFunctionNT(feature, resolution, name = '', overflow = true) {
+  let text = '';
+  if (name !== '') {
+    text = name;
+  } else {
+    text = feature.get('NAME');
+    if (text === undefined) {
+      text = feature.get('Name');
+    }
   }
-  return lineStyleFunction(feature, resolution, text, colorNT);
+  return lineStyleFunction(feature, resolution, text, colorNT, overflow);
 }
 
 function createVectorLayer(stylefunc, url, extentCountry) {
@@ -922,16 +927,19 @@ const map = new Map({
     new LayerGroup({
       title: 'Designations',
       layers: [
-        createLayerGroup(
-          `${legendLine(colorNT)} National Trails`,
-          'NT',
-          lineStyleFunctionNT,
-          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?',
-          null,
-          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&',
-          null,
-          false,
-        ),
+        new LayerGroup({
+          title: `${legendLine(colorNT)} National Trails / Coast Paths`,
+          shortTitle: 'NT',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            vectorLayerEngland(lineStyleFunctionNT, 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?'),
+            vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', false), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?'),
+            vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&'),
+            vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&'),
+          ],
+        }),
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
           `${legendBox(colorAONB)} National Landscapes / AONB`,
           'AONB',
