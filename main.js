@@ -461,7 +461,7 @@ function lineStyleFunction(feature, resolution, text, color, overflow = true) {
 }
 
 const colorNT = 'rgba(115, 0, 0, 1)';
-function lineStyleFunctionNT(feature, resolution, name = '', overflow = true) {
+function lineStyleFunctionNT(feature, resolution, name = '', overflowCheck = false) {
   let text = '';
   if (name !== '') {
     text = name;
@@ -469,6 +469,13 @@ function lineStyleFunctionNT(feature, resolution, name = '', overflow = true) {
     text = feature.get('NAME');
     if (text === undefined) {
       text = feature.get('Name');
+    }
+  }
+  let overflow = true;
+  if (overflowCheck) {
+    // Allow overflow on long sections to have some labels
+    if (feature.getGeometry().getLength() < Math.max(200, 150 * resolution)) {
+      overflow = false;
     }
   }
   return lineStyleFunction(feature, resolution, text, colorNT, overflow);
@@ -935,7 +942,7 @@ const map = new Map({
           minZoom: 6,
           layers: [
             vectorLayerEngland(lineStyleFunctionNT, 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?'),
-            vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', false), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?'),
+            vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', true), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?'),
             vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&'),
             vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&'),
           ],
