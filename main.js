@@ -522,11 +522,7 @@ function vectorLayerEngland(stylefunc, url) {
       attributions: 'Boundaries:&nbsp;©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: new EsriJSON(),
       projection: projection27700,
-      strategy: (extent) => (
-        (intersects(extent, extentEngland)
-         && !contains(extentWales, extent)
-         && !contains(extentScotland, extent)
-         && !contains(extentNorthernIreland, extent)) ? [extent] : []),
+      strategy: (extent) => (intersects(extent, extentEngland) ? [extent] : []),
       url: (extent) => `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
         + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
         + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=*&outSR=27700',
