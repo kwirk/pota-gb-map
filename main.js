@@ -21,7 +21,6 @@ import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
 import {
   buffer,
-  containsExtent as contains,
   extend,
   intersects,
 } from 'ol/extent';
