@@ -39,9 +39,9 @@ Thanks to support from Carl M0ICR and UKBOTA programme for UKBOTA references.
 
 Thanks to Ed DD5LP and Rob G7LAS for suggestion and providing data for HEMA programme.
 
-Thanks to [Ordnance Survey](https://www.ordnancesurvey.co.uk/) and [TrigpointingUK](https://trigpointing.uk/) for trig point references.
+Thanks to Fraser MM0EFI for the suggestion, and [Ordnance Survey](https://www.ordnancesurvey.co.uk/) and [TrigpointingUK](https://trigpointing.uk/) for trig point references.
 
-Thanks to suggestion from Rich M7GET, and support from Jim M0ZAH and [ETCC UK repeaters](https://ukrepeater.net/) for providing data for UK repeaters.
+Thanks to Rich M7GET for the suggestion, and support from Jim M0ZAH and [ETCC UK repeaters](https://ukrepeater.net/) for providing data for UK repeaters.
 
 Thanks to Peter G4MJS for suggestion on adding National Trails and Coast Paths.
 
