@@ -55,8 +55,10 @@ import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
-import REPEATERS_2M from './data/repeaters_2m.json?url';
-import REPEATERS_70CM from './data/repeaters_70cm.json?url';
+import REPEATERS_2M_A from './data/repeaters_2m_a.json?url';
+import REPEATERS_2M_D from './data/repeaters_2m_d.json?url';
+import REPEATERS_70CM_A from './data/repeaters_70cm_a.json?url';
+import REPEATERS_70CM_D from './data/repeaters_70cm_d.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
@@ -899,8 +901,8 @@ const map = new Map({
       title: 'Repeaters',
       layers: [
         new VectorLayer({
-          title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 90)}${legendTriangle('#31eb85', 180)} 70cm (Analog/Digital/Mixed)`,
-          shortTitle: 'REP70CM',
+          title: `${legendTriangle('#31eb85', 90)}${legendTriangle('#31eb85', 180)} 70cm (Digital/Mixed)`,
+          shortTitle: 'REP70CMD',
           refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
           visible: false,
@@ -908,12 +910,25 @@ const map = new Map({
           source: new VectorSource({
             attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
             format: GeoJSON27700,
-            url: REPEATERS_70CM,
+            url: REPEATERS_70CM_D,
           }),
         }),
         new VectorLayer({
-          title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 90)}${legendTriangle('#edb940', 180)} 2m (Analog/Digital/Mixed)`,
-          shortTitle: 'REP2M',
+          title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 180)} 70cm (Analog/Mixed)`,
+          shortTitle: 'REP70CMA',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
+          source: new VectorSource({
+            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
+            format: GeoJSON27700,
+            url: REPEATERS_70CM_A,
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendTriangle('#edb940', 90)}${legendTriangle('#edb940', 180)} 2m (Digital/Mixed)`,
+          shortTitle: 'REP2MD',
           refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
           visible: false,
@@ -921,7 +936,20 @@ const map = new Map({
           source: new VectorSource({
             attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
             format: GeoJSON27700,
-            url: REPEATERS_2M,
+            url: REPEATERS_2M_D,
+          }),
+        }),
+        new VectorLayer({
+          title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 180)} 2m (Analog/Mixed)`,
+          shortTitle: 'REP2MA',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
+          source: new VectorSource({
+            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
+            format: GeoJSON27700,
+            url: REPEATERS_2M_A,
           }),
         }),
       ],
@@ -1327,10 +1355,14 @@ function layersLinkCallback(newValue) {
     const layers = newValue.split(' ');
     LayerSwitcher.forEachRecursive(map, (layer) => {
       const shortTitle = layer.get('shortTitle');
-      if (layers.includes(shortTitle)) {
-        layer.setVisible(true);
-      } else if (shortTitle) {
-        layer.setVisible(false);
+      if (shortTitle) {
+        if (layers.includes(shortTitle)
+            || (layers.includes('REP2M') && shortTitle.startsWith('REP2M'))
+            || (layers.includes('REP70CM') && shortTitle.startsWith('REP70CM'))) {
+          layer.setVisible(true);
+        } else {
+          layer.setVisible(false);
+        }
       }
     });
   }
@@ -1373,24 +1405,30 @@ LayerSwitcher.forEachRecursive(map, (layer) => {
 const popup = new Popup();
 map.addOverlay(popup);
 map.on('singleclick', (event) => {
+  const refs = new Set();
   const content = document.createElement('ul');
   map.forEachFeatureAtPixel(
     event.pixel,
     (feature, layer) => {
-      let url = layer.get('refUrl');
-      if (feature.get('refUrl')) {
-        url += feature.get('refUrl');
-      } else {
-        url += feature.get('reference');
-      }
-      const refLink = document.createElement('a');
-      refLink.href = url;
-      refLink.textContent = `${feature.get('reference')} ${feature.get('name')}`;
-      refLink.target = '_blank';
+      const ref = feature.get('reference');
+      if (!refs.has(ref)) {
+        refs.add(ref);
 
-      const listItem = document.createElement('li');
-      listItem.appendChild(refLink);
-      content.appendChild(listItem);
+        let url = layer.get('refUrl');
+        if (feature.get('refUrl')) {
+          url += feature.get('refUrl');
+        } else {
+          url += ref;
+        }
+        const refLink = document.createElement('a');
+        refLink.href = url;
+        refLink.textContent = `${ref} ${feature.get('name')}`;
+        refLink.target = '_blank';
+
+        const listItem = document.createElement('li');
+        listItem.appendChild(refLink);
+        content.appendChild(listItem);
+      }
     },
     {
       layerFilter: (layer) => layer.get('refUrl'),
