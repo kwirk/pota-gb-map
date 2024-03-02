@@ -274,16 +274,16 @@ function triangleStyleFunction(feature, resolution, color) {
     text += ` ${feature.get('name')}`;
   }
 
-  const analog = feature.get('name').split(' ')[1].includes('A');
+  const analogue = feature.get('name').split(' ')[1].includes('A');
   const nModes = feature.get('name').split(' ')[1].length;
-  const digital = (nModes > 1 && analog) || (nModes > 0 && !analog);
-  const key = `${analog}${digital}${color}`;
+  const digital = (nModes > 1 && analogue) || (nModes > 0 && !analogue);
+  const key = `${analogue}${digital}${color}`;
   let triangleImageStyle = triangleImageStyleCache.get(key);
   if (triangleImageStyle === undefined) {
     let rotation = 0;
     if (digital) {
       rotation += Math.PI / 2;
-      if (analog) {
+      if (analogue) {
         rotation += Math.PI / 2;
       }
     }
@@ -914,7 +914,7 @@ const map = new Map({
           }),
         }),
         new VectorLayer({
-          title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 180)} 70cm (Analog/Mixed)`,
+          title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 180)} 70cm (Analogue/Mixed)`,
           shortTitle: 'REP70CMA',
           refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
@@ -940,7 +940,7 @@ const map = new Map({
           }),
         }),
         new VectorLayer({
-          title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 180)} 2m (Analog/Mixed)`,
+          title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 180)} 2m (Analogue/Mixed)`,
           shortTitle: 'REP2MA',
           refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
           minZoom: 6,
