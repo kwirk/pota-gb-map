@@ -30,12 +30,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'requirements-dev.txt'
+      - name: Install Python dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Download repeater list
+        run: curl -o repeaterlist.csv "https://ukrepeater.net/csvcreate1.php"
+      - name: Generate repeat GeoJSON
+        run: |
+          python ukrepeater2geojson repeaterlist.csv 2M analogue > data/repeaters_2m_a.json
+          python ukrepeater2geojson repeaterlist.csv 2M digital > data/repeaters_2m_d.json
+          python ukrepeater2geojson repeaterlist.csv 70CM analogue > data/repeaters_70cm_a.json
+          python ukrepeater2geojson repeaterlist.csv 70CM digital > data/repeaters_70cm_d.json
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: npm ci
       - name: Build
         env:

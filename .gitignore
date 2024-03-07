@@ -1,3 +1,7 @@
 node_modules
 dist
 .env
+
+# Data sources
+repeaterlist.csv
+data/repeaters_*
