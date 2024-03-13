@@ -7,7 +7,7 @@
     "serve": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.1.4"
+    "vite": "^5.1.6"
   },
   "dependencies": {
     "lru-cache": "^10.2.0",
