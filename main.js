@@ -1014,7 +1014,7 @@ const map = new Map({
           ],
         }),
         createLayerGroup(
-          `${legendBox(colorSSSI)} Special Sites of Scientific Interest`,
+          `${legendBox(colorSSSI)} Sites of Special Scientific Interest`,
           'SSSI',
           polygonStyleFunctionSSSI,
           'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/SSSI_England/FeatureServer/0/query?',
