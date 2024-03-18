@@ -1,1 +1,2 @@
 pyproj
+pandas[html]

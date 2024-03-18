@@ -5,3 +5,5 @@ dist
 # Data sources
 repeaterlist.csv
 data/repeaters_*
+data/ECA.json
+data/ELA.json

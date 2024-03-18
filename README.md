@@ -45,6 +45,8 @@ Thanks to Rich M7GET for the suggestion, and support from Jim M0ZAH and [ETCC UK
 
 Thanks to Peter G4MJS for suggestion on adding National Trails and Coast Paths.
 
+Thanks to Bob M0MJA for support with [English Castles Awards](https://englishcastlesawards.uk/) and [English Lighthouse Awards](https://englishlighthouseawards.uk/).
+
 And thanks to all those that manage, run and support the various portable programmes mentioned above, that make portable radio so much more rewarding.
 
 ## License

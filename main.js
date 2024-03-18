@@ -54,6 +54,8 @@ import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
+import ECA from './data/ECA.json?url';
+import ELA from './data/ELA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 import REPEATERS_2M_A from './data/repeaters_2m_a.json?url';
 import REPEATERS_2M_D from './data/repeaters_2m_d.json?url';
@@ -669,22 +671,22 @@ bingGroup.once('change:visible', () => {
   }));
 });
 
-let BOTAData = null;
-function withBOTAData(func, error) {
-  if (BOTAData !== null) {
-    func(BOTAData);
+// Used for layers switching between Circle and Polygon styles
+const dataCache = {};
+function withData(url, func, error) {
+  if (dataCache[url] !== undefined) {
+    func(dataCache[url]);
   } else {
-    const url = BOTA;
     const xhr = new XMLHttpRequest();
     xhr.responseType = 'json';
     xhr.open('GET', url);
     xhr.onerror = error;
     xhr.onload = () => {
       if (xhr.status === 200) {
-        BOTAData = new GeoJSONReference({
+        dataCache[url] = new GeoJSONReference({
           dataProjection: projection27700,
         }).readFeaturesFromObject(xhr.response);
-        func(BOTAData);
+        func(dataCache[url]);
       } else {
         error();
       }
@@ -1127,10 +1129,11 @@ const map = new Map({
               updateWhileAnimating: true,
               style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
               source: new VectorSource({
-                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>.',
                 loader: function loader(extent, resolution, projection, success, failure) {
                   const vectorSource = this;
-                  withBOTAData(
+                  withData(
+                    BOTA,
                     (BOTAfeatures) => {
                       vectorSource.addFeatures(BOTAfeatures);
                       success(BOTAfeatures);
@@ -1149,15 +1152,16 @@ const map = new Map({
               updateWhileAnimating: true,
               style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(122, 174, 0, 1)', true),
               source: new VectorSource({
-                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>',
+                attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>.',
                 strategy: bboxStrategy,
                 loader: function loader(extent, resolution, projection, success, failure) {
                   const vectorSource = this;
-                  withBOTAData(
-                    (BOTAfeatures) => {
-                      const features = [];
+                  withData(
+                    BOTA,
+                    (features) => {
+                      const newFeatures = [];
                       const expandedExtent = buffer(extent, 1000); // To capture centre point
-                      BOTAfeatures.forEach((feature) => {
+                      features.forEach((feature) => {
                         const geometry = feature.getGeometry();
                         if (vectorSource.getFeatureById(feature.getId()) === null
                             && geometry.intersectsExtent(expandedExtent)) {
@@ -1173,11 +1177,165 @@ const map = new Map({
                           const newFeature = feature.clone();
                           newFeature.setGeometry(new Polygon([coordinates]));
                           newFeature.setId(feature.getId()); // ID reset on clone
-                          features.push(newFeature);
+                          newFeatures.push(newFeature);
                         }
                       });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(255, 100, 0, 0.5)')} English Lighthouse Awards`,
+          shortTitle: 'ELA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 0, 1)', 1000 / resolution),
+              source: new VectorSource({
+                attributions: 'ELA&nbsp;references:<a href="https://englishlighthouseawards.uk/" target="_blank">©&nbsp;English&nbsp;Lighthouse&nbsp;Awards</a>.',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    ELA,
+                    (features) => {
                       vectorSource.addFeatures(features);
                       success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(255, 100, 0, 1)', true),
+              source: new VectorSource({
+                attributions: 'ELA&nbsp;references:<a href="https://englishlighthouseawards.uk/" target="_blank">©&nbsp;English&nbsp;Lighthouse&nbsp;Awards</a>.',
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    ELA,
+                    (features) => {
+                      const newFeatures = [];
+                      const expandedExtent = buffer(extent, 1000); // To capture centre point
+                      features.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
+                            const x = centerXY[0] + Math.cos(-angle) * 1000;
+                            const y = centerXY[1] + Math.sin(-angle) * 1000;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId()); // ID reset on clone
+                          newFeatures.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(50, 180, 150, 0.5)')} English Castles Awards`,
+          shortTitle: 'ECA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(50, 180, 150, 1)', 1000 / resolution),
+              source: new VectorSource({
+                attributions: 'ECA&nbsp;references:<a href="https://englishcastlesawards.uk/" target="_blank">©&nbsp;English&nbsp;Castle&nbsp;Awards</a>.',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    ECA,
+                    (features) => {
+                      vectorSource.addFeatures(features);
+                      success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(50, 180, 150, 1)', true),
+              source: new VectorSource({
+                attributions: 'ECA&nbsp;references:<a href="https://englishcastlesawards.uk/" target="_blank">©&nbsp;English&nbsp;Castle&nbsp;Awards</a>.',
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    ECA,
+                    (features) => {
+                      const newFeatures = [];
+                      const expandedExtent = buffer(extent, 1000); // To capture centre point
+                      features.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
+                            const x = centerXY[0] + Math.cos(-angle) * 1000;
+                            const y = centerXY[1] + Math.sin(-angle) * 1000;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId()); // ID reset on clone
+                          newFeatures.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
                     },
                     () => {
                       vectorSource.removeLoadedExtent(extent);
