@@ -39,7 +39,7 @@ if __name__ == "__main__":
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": point,
+                    "coordinates": [int(p) for p in point],
                 },
                 "properties": {
                     "name": "{band} {Modes}".format(**row),
