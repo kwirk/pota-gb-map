@@ -695,7 +695,9 @@ class RepeaterVectorSource extends VectorSource {
           const features = [];
           if (xhr.status === 200) {
             xhr.response.data.filter(
-              (item) => (vectorSource.band === item.band
+              (item) => (
+                vectorSource.band === item.band
+                && vectorSource.types.has(item.type)
                 && item.modeCodes?.filter((x) => (vectorSource.modes.has(x))).length > 0),
             ).forEach((item) => {
               const ngr = item.extraDetails?.ngr;
@@ -721,6 +723,7 @@ class RepeaterVectorSource extends VectorSource {
     });
     this.band = options.band;
     this.modes = options.modes;
+    this.types = options.types;
   }
 }
 
@@ -982,7 +985,7 @@ const map = new Map({
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
-          source: new RepeaterVectorSource({band: '70CM', modes: new Set('DMFPN')}),
+          source: new RepeaterVectorSource({band: '70CM', modes: new Set('DMFPN'), types: new Set(['AV', 'DV', 'DM'])}),
         }),
         new VectorLayer({
           title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 180)} 70cm (Analogue/Mixed)`,
@@ -991,7 +994,7 @@ const map = new Map({
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
-          source: new RepeaterVectorSource({band: '70CM', modes: new Set('A')}),
+          source: new RepeaterVectorSource({band: '70CM', modes: new Set('A'), types: new Set(['AV', 'DV', 'DM'])}),
 
         }),
         new VectorLayer({
@@ -1001,7 +1004,7 @@ const map = new Map({
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
-          source: new RepeaterVectorSource({band: '2M', modes: new Set('DMFPN')}),
+          source: new RepeaterVectorSource({band: '2M', modes: new Set('DMFPN'), types: new Set(['AV', 'DV', 'DM'])}),
         }),
         new VectorLayer({
           title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 180)} 2m (Analogue/Mixed)`,
@@ -1010,7 +1013,7 @@ const map = new Map({
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
-          source: new RepeaterVectorSource({band: '2M', modes: new Set('A')}),
+          source: new RepeaterVectorSource({band: '2M', modes: new Set('A'), types: new Set(['AV', 'DV', 'DM'])}),
         }),
       ],
     }),
