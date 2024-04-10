@@ -38,14 +38,6 @@ jobs:
           cache-dependency-path: 'requirements-dev.txt'
       - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
-      - name: Download repeater list
-        run: curl -o repeaterlist.csv "https://ukrepeater.net/csvcreate1.php"
-      - name: Generate repeater GeoJSON
-        run: |
-          python ukrepeater2geojson repeaterlist.csv 2M analogue > data/repeaters_2m_a.json
-          python ukrepeater2geojson repeaterlist.csv 2M digital > data/repeaters_2m_d.json
-          python ukrepeater2geojson repeaterlist.csv 70CM analogue > data/repeaters_70cm_a.json
-          python ukrepeater2geojson repeaterlist.csv 70CM digital > data/repeaters_70cm_d.json
       - name: Generate ECA/ELA GeoJSON
         run: |
           python ecaela2geojson eca > data/ECA.json

@@ -22,6 +22,7 @@ import {Projection, fromLonLat, transformExtent} from 'ol/proj';
 import {
   buffer,
   extend,
+  getCenter,
   intersects,
 } from 'ol/extent';
 import {EsriJSON, GeoJSON} from 'ol/format';
@@ -88,6 +89,45 @@ const osGridPrefixes = [
   ['HL', 'HM', 'HN', 'HO', 'HP', 'JL', 'JM'],
 ];
 
+function osGridToEastingNorthing(ngr) {
+  const prefix = ngr.slice(0, 2);
+  const precision = (ngr.length - 2) / 2;
+  let easting = parseInt(ngr.slice(2, 2 + precision).padEnd(5, '0'), 10);
+  let northing = parseInt(ngr.slice(2 + precision, 2 + 2 * precision).padEnd(5, '0'), 10);
+  if (osGridPrefixes.some((row, northIndex) => {
+    const eastIndex = row.indexOf(prefix);
+    if (eastIndex >= 0) {
+      northing += 100000 * northIndex;
+      easting += 100000 * eastIndex;
+    }
+    return eastIndex >= 0;
+  })) return [easting, northing];
+  return undefined;
+}
+
+function getMaidenheadGrid(lon, lat, level) {
+  let xg = (lon + 180) / 20;
+  let yg = (lat + 90) / 10;
+  let grid = String.fromCharCode(65 + Math.floor(xg));
+  grid += String.fromCharCode(65 + Math.floor(yg));
+  for (let n = 1; n < level; n += 1) {
+    xg %= 1;
+    yg %= 1;
+    if (n % 2) {
+      xg *= 10;
+      yg *= 10;
+      grid += Math.floor(xg).toString();
+      grid += Math.floor(yg).toString();
+    } else {
+      xg *= 24;
+      yg *= 24;
+      grid += String.fromCharCode(65 + Math.floor(xg));
+      grid += String.fromCharCode(65 + Math.floor(yg));
+    }
+  }
+  return grid;
+}
+
 function getMaidenheadGridFeatures27700(extent, level) {
   const features = [];
   const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
@@ -101,25 +141,7 @@ function getMaidenheadGridFeatures27700(extent, level) {
   const yN = Math.ceil(newExtent[3] / step) * step;
   for (let x = x0; x < xN; x += 2 * step) {
     for (let y = y0; y < yN; y += step) {
-      let xg = (x + 180) / 20;
-      let yg = (y + 90) / 10;
-      let grid = String.fromCharCode(65 + Math.floor(xg));
-      grid += String.fromCharCode(65 + Math.floor(yg));
-      for (let n = 1; n < level; n += 1) {
-        xg = (xg + step * 1e-3) % 1;
-        yg = (yg + step * 1e-3) % 1;
-        if (n % 2) {
-          xg *= 10;
-          yg *= 10;
-          grid += Math.floor(xg).toString();
-          grid += Math.floor(yg).toString();
-        } else {
-          xg *= 24;
-          yg *= 24;
-          grid += String.fromCharCode(65 + Math.floor(xg));
-          grid += String.fromCharCode(65 + Math.floor(yg));
-        }
-      }
+      const grid = getMaidenheadGrid(x + (level * 1e-3), y + (level * 1e-3), level);
       const feature = new Feature({
         geometry: new Polygon(
           [[[x, y],
@@ -651,6 +673,61 @@ const OSMSource = new OSM({
   attributions: 'Map:&nbsp;©<a href="https://openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>&nbsp;contributors.',
 });
 
+class RepeaterVectorSource extends VectorSource {
+  constructor(options) {
+    super({
+      attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
+      strategy: (extent) => (
+        getMaidenheadGridFeatures27700(extent, 2).map(
+          (feature) => (feature.getGeometry().getExtent()),
+        )
+      ),
+      loader: function loader(extent, resolution, projection, success, failure) {
+        const vectorSource = this;
+        const [lon, lat] = getCenter(transformExtent(extent, projection27700, 'EPSG:4326'));
+        const grid = getMaidenheadGrid(lon, lat, 2);
+        const url = `https://api-beta.rsgb.online/locator/${grid}`;
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url);
+        xhr.responseType = 'json';
+        function onError() {
+          vectorSource.removeLoadedExtent(extent);
+          failure();
+        }
+        xhr.onerror = onError;
+        xhr.onload = () => {
+          const features = [];
+          if (xhr.status === 200) {
+            xhr.response.data.filter(
+              (item) => (vectorSource.band === item.band
+                && item.modeCodes?.filter((x) => (vectorSource.modes.has(x))).length > 0),
+            ).forEach((item) => {
+              const ngr = item.extraDetails?.ngr;
+              if (ngr) {
+                const feature = new Feature({
+                  geometry: new Point(osGridToEastingNorthing(ngr)),
+                  reference: item.repeater,
+                  refUrl: item.id,
+                  name: `${item.band} ${item.modeCodes.join('')}`,
+                });
+                feature.setId(item.id);
+                features.push(feature);
+              }
+            });
+            vectorSource.addFeatures(features);
+            success(features);
+          } else {
+            onError();
+          }
+        };
+        xhr.send();
+      },
+    });
+    this.band = options.band;
+    this.modes = options.modes;
+  }
+}
+
 const bingGroup = new LayerGroup({
   title: 'Bing Imagery',
   shortTitle: 'BING',
@@ -905,54 +982,39 @@ const map = new Map({
         new VectorLayer({
           title: `${legendTriangle('#31eb85', 90)}${legendTriangle('#31eb85', 180)} 70cm (Digital/Mixed)`,
           shortTitle: 'REP70CMD',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
-          source: new VectorSource({
-            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
-            format: GeoJSON27700,
-            url: REPEATERS_70CM_D,
-          }),
+          source: new RepeaterVectorSource({band: '70CM', modes: new Set('DMFPN')}),
         }),
         new VectorLayer({
           title: `${legendTriangle('#31eb85')}${legendTriangle('#31eb85', 180)} 70cm (Analogue/Mixed)`,
           shortTitle: 'REP70CMA',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#31eb85'),
-          source: new VectorSource({
-            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
-            format: GeoJSON27700,
-            url: REPEATERS_70CM_A,
-          }),
+          source: new RepeaterVectorSource({band: '70CM', modes: new Set('A')}),
+
         }),
         new VectorLayer({
           title: `${legendTriangle('#edb940', 90)}${legendTriangle('#edb940', 180)} 2m (Digital/Mixed)`,
           shortTitle: 'REP2MD',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
-          source: new VectorSource({
-            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
-            format: GeoJSON27700,
-            url: REPEATERS_2M_D,
-          }),
+          source: new RepeaterVectorSource({band: '2M', modes: new Set('DMFPN')}),
         }),
         new VectorLayer({
           title: `${legendTriangle('#edb940')}${legendTriangle('#edb940', 180)} 2m (Analogue/Mixed)`,
           shortTitle: 'REP2MA',
-          refUrl: 'https://ukrepeater.net/my_repeater.php?repeater=',
+          refUrl: 'https://ukrepeater.net/my_repeater.php?id=',
           minZoom: 6,
           visible: false,
           style: (feature, resolution) => triangleStyleFunction(feature, resolution, '#edb940'),
-          source: new VectorSource({
-            attributions: 'Repeaters:<a href="https://ukrepeater.net/" target="_blank">©&nbsp;ukreapter.net</a>',
-            format: GeoJSON27700,
-            url: REPEATERS_2M_A,
-          }),
+          source: new RepeaterVectorSource({band: '2M', modes: new Set('A')}),
         }),
       ],
     }),
