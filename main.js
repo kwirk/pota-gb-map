@@ -58,10 +58,6 @@ import HEMA from './data/HEMA.json?url';
 import ECA from './data/ECA.json?url';
 import ELA from './data/ELA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
-import REPEATERS_2M_A from './data/repeaters_2m_a.json?url';
-import REPEATERS_2M_D from './data/repeaters_2m_d.json?url';
-import REPEATERS_70CM_A from './data/repeaters_70cm_a.json?url';
-import REPEATERS_70CM_D from './data/repeaters_70cm_d.json?url';
 
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
