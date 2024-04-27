@@ -3,7 +3,6 @@ dist
 .env
 
 # Data sources
-repeaterlist.csv
-data/repeaters_*
+data/BOTA.json
 data/ECA.json
 data/ELA.json
