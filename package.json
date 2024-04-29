@@ -10,7 +10,7 @@
     "vite": "^5.2.10"
   },
   "dependencies": {
-    "lru-cache": "^10.2.0",
+    "lru-cache": "^10.2.2",
     "ol": "^9.1.0",
     "ol-layerswitcher": "^4.1.1",
     "ol-popup": "^5.1.0",
