@@ -1,6 +1,6 @@
 import './style.css';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
-import 'ol-popup/src/ol-popup.css';
+import 'ol-popup/dist/ol-popup.css';
 
 import {
   Collection, Feature, Map, View,
