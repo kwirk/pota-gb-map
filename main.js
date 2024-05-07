@@ -1063,6 +1063,7 @@ const map = new Map({
           title: `${legendBox(colorFP)} Forest Parks`,
           shortTitle: 'FP',
           combine: true,
+          visible: false,
           minZoom: 6,
           layers: [
             new VectorLayer({
