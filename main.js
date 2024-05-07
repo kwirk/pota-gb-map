@@ -445,7 +445,7 @@ function polygonStyleFunctionSPA(feature, resolution) {
 const colorRSPB = 'rgba(76, 0, 126, 1)';
 function polygonStyleFunctionRSPB(feature, resolution) {
   const text = feature.get('Name');
-  return polygonStyleFunction(feature, resolution, text, 'rgba(76, 0, 126, 1)');
+  return polygonStyleFunction(feature, resolution, text, colorRSPB);
 }
 
 const colorNP = 'rgba(0, 102, 0, 1)';
@@ -458,6 +458,12 @@ function polygonStyleFunctionNP(feature, resolution) {
     text = feature.get('NAME');
   }
   return polygonStyleFunction(feature, resolution, text, colorNP);
+}
+
+const colorFP = 'rgba(109, 179, 63, 1)';
+function polygonStyleFunctionFP(feature, resolution) {
+  const text = feature.get('FOREST_PAR');
+  return polygonStyleFunction(feature, resolution, text, colorFP);
 }
 
 function lineStyleFunction(feature, resolution, text, color, overflow = true) {
@@ -1051,6 +1057,28 @@ const map = new Map({
           minZoom: 6,
           layers: [
             createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendBox(colorFP)} Forest Parks`,
+          shortTitle: 'FP',
+          combine: true,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionFP,
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;©&nbsp;Forestry&nbsp;Commission&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
+                format: new EsriJSON(),
+                projection: projection27700,
+                strategy: bboxStrategy,
+                url: (extent) => 'https://services2.arcgis.com/mHXjwgl3OARRqqD4/arcgis/rest/services/National_Forest_Estate_Forest_Parks_GB/FeatureServer/0/query?'
+                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
+                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,FOREST_PAR&outSR=27700',
+              }),
+            }),
           ],
         }),
         new LayerGroup({

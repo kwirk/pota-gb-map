@@ -25,7 +25,9 @@ This map brings together work from many others, which I thank for their support 
 
 Thanks to [Natural England](https://www.gov.uk/government/organisations/natural-england),
 [NatureScot](https://www.nature.scot/),
-[Natural Resources Wales](https://naturalresources.wales/) for providing GIS services to access their data.
+[Natural Resources Wales](https://naturalresources.wales/),
+[Forestry Commission](https://www.gov.uk/government/organisations/forestry-commission),
+and [RSPB](https://www.rspb.org.uk/) for providing GIS services to access their data.
 Also [Northern Ireland Environment Agency](https://www.daera-ni.gov.uk/northern-ireland-environment-agency) for providing data
 for providing similar data via files.
 
