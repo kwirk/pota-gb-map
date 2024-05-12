@@ -7,7 +7,10 @@ with [Parks on the Air® (POTA)](https://parksontheair.com/),
 [World Wide Flora and Fauna (WWFF)](https://wwff.co/),
 [Summits on the Air (SOTA)](https://www.sota.org.uk/),
 [HuMPs Excluding Marilyns Award (HEMA)](http://hema.org.uk/),
-[UK Bunkers on the Air (UKBOTA)](https://bunkersontheair.org/) and [Work All Britain (WAB) Trig Points](https://wab.intermip.net/Trig%20Points%20Award.php)
+[UK Bunkers on the Air (UKBOTA)](https://bunkersontheair.org/),
+[English Castles Awards (ECA)](https://englishcastlesawards.uk/),
+[English Lighthouse Awards (ELA)](https://englishlighthouseawards.uk/),
+and [Work All Britain (WAB) Trig Points](https://wab.intermip.net/Trig%20Points%20Award.php)
 references overlaid to help with
 planning activities and identifying the correct boundaries.
 
