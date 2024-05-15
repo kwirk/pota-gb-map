@@ -222,6 +222,29 @@ class EsriJSONObjectID extends EsriJSON {
   }
 }
 
+// Convert MultiLineString into multiple LineString features
+// Needed so labels work correctly
+class EsriJSONMLS extends EsriJSON {
+  readFeatures(source, options) {
+    const features = [];
+    super.readFeatures(source, options).forEach((baseFeature) => {
+      if (baseFeature.getGeometry().getType() === 'MultiLineString') {
+        baseFeature.getGeometry().getLineStrings().forEach((geometry, n) => {
+          const feature = new Feature({
+            ...baseFeature.getProperties(),
+            geometry,
+            id: `${baseFeature.getId()}_${n}`,
+          });
+          features.push(feature);
+        });
+      } else {
+        features.push(baseFeature);
+      }
+    });
+    return features;
+  }
+}
+
 // Styles
 function gridStyle(feature) {
   return new Style({
@@ -547,7 +570,7 @@ function vectorLayerEngland(stylefunc, url) {
     style: stylefunc,
     source: new VectorSource({
       attributions: 'Boundaries:&nbsp;©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
-      format: new EsriJSON(),
+      format: new EsriJSONMLS(),
       projection: projection27700,
       strategy: (extent) => (intersects(extent, extentEngland) ? [extent] : []),
       url: (extent) => `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
