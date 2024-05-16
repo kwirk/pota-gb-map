@@ -490,7 +490,7 @@ function polygonStyleFunctionFP(feature, resolution) {
 }
 
 function lineStyleFunction(feature, resolution, text, color, overflow = true) {
-  const width = Math.max(30.5 / resolution, 4);
+  const width = Math.max(61 / resolution, 4); // ±100ft
   return new Style({
     stroke: new Stroke({
       color: width > 4 ? colorOpacity(color, 0.5) : color,
