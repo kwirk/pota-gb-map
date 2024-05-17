@@ -77,3 +77,9 @@ ul {
 li {
   margin-top: 5px;
 }
+
+.layer-switcher button {
+  background-image: url(favicon.ico) !important;
+  background-position: center !important;
+  background-size: cover;
+}
