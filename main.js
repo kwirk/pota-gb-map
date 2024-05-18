@@ -1603,15 +1603,29 @@ const map = new Map({
             attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
             projection: projection27700,
             format: new GeoJSONReference({featureProjection: projection27700}),
-            strategy: bboxStrategy,
+            strategy: (extent) => {
+              const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+              const [x0, y0, xN, yN] = [
+                Math.floor(newExtent[0]),
+                Math.floor(newExtent[1] * 2) / 2,
+                Math.ceil(newExtent[2]),
+                Math.ceil(newExtent[3] * 2) / 2];
+              const extents = [];
+              for (let x = x0; x < xN; x += 1) {
+                for (let y = y0; y < yN; y += 0.5) {
+                  extents.push(transformExtent([x, y, x + 1, y + 0.5], 'EPSG:4326', projection27700));
+                }
+              }
+              return extents;
+            },
             url: (extent) => {
-              let newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
-              newExtent = [
-                Math.floor(newExtent[0] * 10) / 10,
-                Math.floor(newExtent[1] * 10) / 10,
-                Math.ceil(newExtent[2] * 10) / 10,
-                Math.ceil(newExtent[3] * 10) / 10];
-              return `https://api.pota.app/park/grids/${newExtent[1]}/${newExtent[0]}/${newExtent[3]}/${newExtent[2]}/0`;
+              const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+              const [minLon, minLat, maxLon, maxLat] = [
+                Math.round(newExtent[0]),
+                Math.round(newExtent[1] * 2) / 2,
+                Math.round(newExtent[2]),
+                Math.round(newExtent[3] * 2) / 2];
+              return `https://api.pota.app/park/grids/${minLat}/${minLon}/${maxLat}/${maxLon}/0`;
             },
           }),
         }),
