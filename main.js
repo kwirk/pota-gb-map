@@ -48,6 +48,8 @@ import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 import { LRUCache } from 'lru-cache';
 
+import {cachedFeaturesLoader, cacheGridStrategy} from './cachedFeatureLoader';
+
 import NI_AONB from './data/NI_AONB.json?url';
 import NI_ASSI from './data/NI_ASSI.json?url';
 import NI_NNR from './data/NI_NNR.json?url';
@@ -233,8 +235,8 @@ class EsriJSONMLS extends EsriJSON {
           const feature = new Feature({
             ...baseFeature.getProperties(),
             geometry,
-            id: `${baseFeature.getId()}_${n}`,
           });
+          feature.setId(`${baseFeature.getId()}_${n}`);
           features.push(feature);
         });
       } else {
@@ -531,7 +533,7 @@ function lineStyleFunctionNT(feature, resolution, name = '', overflowCheck = fal
   return lineStyleFunction(feature, resolution, text, colorNT, overflow);
 }
 
-function createVectorLayer(stylefunc, url, extentCountry) {
+function createVectorLayer(stylefunc, url, cache, extentCountry) {
   return new VectorLayer({
     minZoom: 6,
     extent: extentCountry,
@@ -540,13 +542,14 @@ function createVectorLayer(stylefunc, url, extentCountry) {
       attributions: 'Boundaries:&nbsp;Contains&nbsp;public&nbsp;sector&nbsp;information&nbsp;licensed&nbsp;under&nbsp;the&nbsp;<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>.',
       projection: projection27700,
       format: GeoJSONObjectID27700,
-      strategy: (extent) => (intersects(extent, extentCountry) ? [extent] : []),
+      loader: cachedFeaturesLoader(cache),
+      strategy: (extent) => (intersects(extent, extentCountry) ? cacheGridStrategy(extent) : []),
       url: (extent) => `${url}version=2.0.0&request=GetFeature&outputFormat=application/json&srsname=EPSG:27700&bbox=${extent}`,
     }),
   });
 }
 
-function createVectorLayerScotGov(stylefunc, layer) {
+function createVectorLayerScotGov(stylefunc, layer, cachePrefix) {
   return new VectorLayer({
     minZoom: 6,
     extent: extentScotland,
@@ -555,7 +558,8 @@ function createVectorLayerScotGov(stylefunc, layer) {
       attributions: 'Boundaries:&nbsp;©&nbsp;NatureScot&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       projection: projection27700,
       format: new EsriJSONObjectID(),
-      strategy: (extent) => (intersects(extent, extentScotland) ? [extent] : []),
+      loader: cachedFeaturesLoader(`${cachePrefix}-GB-SCO`),
+      strategy: (extent) => (intersects(extent, extentScotland) ? cacheGridStrategy(extent) : []),
       url: (extent) => 'https://maps.gov.scot/server/services/ScotGov/ProtectedSites/MapServer/WFSServer?service=WFS&'
           + `typeName=${layer}&outputFormat=ESRIGEOJSON&version=2.0.0&`
           + `request=GetFeature&srsname=EPSG%3A27700&bbox=${extent}`,
@@ -563,7 +567,7 @@ function createVectorLayerScotGov(stylefunc, layer) {
   });
 }
 
-function vectorLayerEngland(stylefunc, url) {
+function vectorLayerEngland(stylefunc, url, cachePrefix) {
   return new VectorLayer({
     minZoom: 6,
     extent: extentEngland,
@@ -572,7 +576,8 @@ function vectorLayerEngland(stylefunc, url) {
       attributions: 'Boundaries:&nbsp;©&nbsp;Natural&nbsp;England&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: new EsriJSONMLS(),
       projection: projection27700,
-      strategy: (extent) => (intersects(extent, extentEngland) ? [extent] : []),
+      loader: cachedFeaturesLoader(`${cachePrefix}-GB-ENG`),
+      strategy: (extent) => (intersects(extent, extentEngland) ? cacheGridStrategy(extent) : []),
       url: (extent) => `${url}f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=`
         + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
         + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=*&outSR=27700',
@@ -580,17 +585,17 @@ function vectorLayerEngland(stylefunc, url) {
   });
 }
 
-function vectorLayerScotland(stylefunc, url) {
-  const layer = createVectorLayer(stylefunc, url, extentScotland);
+function vectorLayerScotland(stylefunc, url, cachePrefix) {
+  const layer = createVectorLayer(stylefunc, url, `${cachePrefix}-GB-SCT`, extentScotland);
   layer.getSource().setAttributions('Boundaries:&nbsp;©&nbsp;NatureScot&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
   return layer;
 }
-function vectorLayerWales(stylefunc, url) {
-  const layer = createVectorLayer(stylefunc, url, extentWales);
+function vectorLayerWales(stylefunc, url, cachePrefix) {
+  const layer = createVectorLayer(stylefunc, url, `${cachePrefix}-GB-WLS`, extentWales);
   layer.getSource().setAttributions('Boundaries:&nbsp;©&nbsp;Natural&nbsp;Resources&nbsp;Wales&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).');
   return layer;
 }
-function vectorLayerNorthernIreland(stylefunc, url) {
+function vectorLayerNorthernIreland(stylefunc, url, cachePrefix) {
   return new VectorLayer({
     minZoom: 6,
     extent: extentNorthernIreland,
@@ -599,8 +604,9 @@ function vectorLayerNorthernIreland(stylefunc, url) {
       attributions: 'Boundaries:&nbsp;©&nbsp;NIEA&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
       format: GeoJSONObjectID27700,
       projection: projection27700,
+      loader: cachedFeaturesLoader(`${cachePrefix}-GB-NIR`),
       strategy: (extent) => (
-        intersects(extent, extentNorthernIreland) ? [extentNorthernIreland] : []),
+        intersects(extent, extentNorthernIreland) ? cacheGridStrategy(extent) : []),
       url: url,
     }),
   });
@@ -618,16 +624,16 @@ function createLayerGroup(
 ) {
   const layers = [];
   if (urlEngland) {
-    layers.push(vectorLayerEngland(stylefunc, urlEngland));
+    layers.push(vectorLayerEngland(stylefunc, urlEngland, shortTitle));
   }
   if (urlScotland) {
-    layers.push(vectorLayerScotland(stylefunc, urlScotland));
+    layers.push(vectorLayerScotland(stylefunc, urlScotland, shortTitle));
   }
   if (urlWales) {
-    layers.push(vectorLayerWales(stylefunc, urlWales));
+    layers.push(vectorLayerWales(stylefunc, urlWales, shortTitle));
   }
   if (urlNorthernIreland) {
-    layers.push(vectorLayerNorthernIreland(stylefunc, urlNorthernIreland));
+    layers.push(vectorLayerNorthernIreland(stylefunc, urlNorthernIreland, shortTitle));
   }
   return new LayerGroup({
     title: title,
@@ -1056,10 +1062,10 @@ const map = new Map({
           visible: false,
           minZoom: 6,
           layers: [
-            vectorLayerEngland(lineStyleFunctionNT, 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?'),
-            vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', true), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?'),
-            vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&'),
-            vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&'),
+            vectorLayerEngland(lineStyleFunctionNT, 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?', 'NT'),
+            vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', true), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?', 'NTCP'),
+            vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&', 'NT'),
+            vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&', 'NTCP'),
           ],
         }),
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
@@ -1079,7 +1085,7 @@ const map = new Map({
           visible: false,
           minZoom: 6,
           layers: [
-            createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas'),
+            createVectorLayerScotGov(polygonStyleFunctionNSA, 'PS:NationalScenicAreas', 'NSA'),
           ],
         }),
         new LayerGroup({
@@ -1096,7 +1102,8 @@ const map = new Map({
                 attributions: 'Boundaries:&nbsp;©&nbsp;Forestry&nbsp;Commission&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
                 format: new EsriJSON(),
                 projection: projection27700,
-                strategy: bboxStrategy,
+                loader: cachedFeaturesLoader('FP'),
+                strategy: cacheGridStrategy,
                 url: (extent) => 'https://services2.arcgis.com/mHXjwgl3OARRqqD4/arcgis/rest/services/National_Forest_Estate_Forest_Parks_GB/FeatureServer/0/query?'
                   + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
                   + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
@@ -1115,16 +1122,19 @@ const map = new Map({
             vectorLayerEngland(
               polygonStyleFunctionNP,
               'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Parks_England/FeatureServer/0/query?',
+              'NP',
             ),
             vectorLayerWales(
               polygonStyleFunctionNP,
               'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_PARK&',
+              'NP',
             ),
-            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark'),
-            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark'),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:CairngormsNationalPark', 'NP'),
+            createVectorLayerScotGov(polygonStyleFunctionNP, 'PS:LochLomondTrossachsNationalPark', 'NP'),
             vectorLayerScotland(
               polygonStyleFunctionNP,
               'https://ogc.nature.scot/geoserver/protectedareas/wfs?service=wfs&typeName=protectedareas:rp&',
+              'NP',
             ),
           ],
         }),
@@ -1199,7 +1209,8 @@ const map = new Map({
                 attributions: 'Boundaries:&nbsp;RSPB&nbsp;Geographic&nbsp;Data&nbsp;End&nbsp;User&nbsp;Agreement.',
                 format: new EsriJSON(),
                 projection: projection27700,
-                strategy: bboxStrategy,
+                strategy: cacheGridStrategy,
+                loader: cachedFeaturesLoader('RSPB'),
                 url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
                   + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
                   + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
