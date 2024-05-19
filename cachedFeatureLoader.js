@@ -107,7 +107,12 @@ export function cachedFeaturesLoader(cache) {
             (featureEvent) => {
               source.addFeature(geoJSON.readFeature(featureEvent.target.result.feature));
             },
-            noCacheLoad(failure),
+            noCacheLoad(() => {
+              source.removeLoadedExtent(extent);
+              if (failure !== undefined) {
+                failure();
+              }
+            }),
           );
         }
         if (extentEvent.target.result.expire > new Date()) {
@@ -115,13 +120,18 @@ export function cachedFeaturesLoader(cache) {
         } else {
           noCacheLoad(() => {
             loadCachedFeatures();
-            if (failure !== undefined) {
-              failure();
+            if (success !== undefined) {
+              success();
             }
           });
         }
       },
-      noCacheLoad(failure),
+      noCacheLoad(() => {
+        source.removeLoadedExtent(extent);
+        if (failure !== undefined) {
+          failure();
+        }
+      }),
     );
   };
 }
