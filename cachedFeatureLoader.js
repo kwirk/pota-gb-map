@@ -25,15 +25,27 @@ function getCachedExtent(cache, extent, success, failure) {
   }
 }
 
-function getCachedFeatures(cache, ids, success, failure) {
+function getCachedFeatures(cache, ids, featureSuccess, success, failure) {
   if (db !== undefined) {
-    const featuresRequest = db.transaction('features').objectStore('features');
+    const features = [];
+    let featureFailure = false;
+    const transaction = db.transaction('features');
+    transaction.oncomplete = () => (!featureFailure ? success(features) : failure());
+    transaction.onerror = failure;
+
+    const featuresRequest = transaction.objectStore('features');
     ids.forEach((id) => {
       const featureRequest = featuresRequest.get([cache, id]);
-      featureRequest.onsuccess = (event) => (
-        (event.target.result !== undefined) ? success(event) : failure(event)
-      );
-      featureRequest.onerror = failure;
+      featureRequest.onsuccess = (event) => {
+        if (event.target.result !== undefined) {
+          const feature = geoJSON.readFeature(event.target.result.feature);
+          features.push(feature);
+          featureSuccess(feature);
+        } else {
+          // Missing feature
+          featureFailure = true;
+        }
+      };
     });
   } else {
     failure();
@@ -42,15 +54,17 @@ function getCachedFeatures(cache, ids, success, failure) {
 
 function setCachedFeatures(cache, extent, features) {
   if (db !== undefined) {
-    const featuresRequest = db.transaction('features', 'readwrite').objectStore('features');
+    const transaction = db.transaction(['extents', 'features'], 'readwrite');
+    const featuresRequest = transaction.objectStore('features');
     features.forEach((feature) => {
       featuresRequest.put({
         cache, id: feature.getId(), feature: geoJSON.writeFeatureObject(feature, {decimals: 0}),
       });
     });
+
     const expire = new Date();
     expire.setDate(expire.getDate() + 14);
-    const extentRequest = db.transaction('extents', 'readwrite').objectStore('extents');
+    const extentRequest = transaction.objectStore('extents');
     extentRequest.put({
       cache, extent, expire, ids: features.map((feature) => feature.getId()),
     });
@@ -70,14 +84,6 @@ export function cachedFeaturesLoader(cache) {
     url = typeof url === 'function' ? url(extent, resolution, projection) : url;
     const format = source.getFormat();
 
-    function cacheSuccess(features) {
-      source.addFeatures(features);
-      setCachedFeatures(cache, extent, features);
-      if (success !== undefined) {
-        success(features);
-      }
-    }
-
     let hasRefreshed = false;
     function noCacheLoad(customFailure) {
       return () => {
@@ -89,9 +95,18 @@ export function cachedFeaturesLoader(cache) {
             extent,
             resolution,
             projection,
-            cacheSuccess,
-            customFailure || (() => {}),
+            (features) => {
+              source.addFeatures(features);
+              setCachedFeatures(cache, extent, features);
+              if (success !== undefined) {
+                success(features);
+              }
+            },
+            customFailure,
           );
+        } else {
+          // Trying again, meaning must have failed.
+          customFailure();
         }
       };
     }
@@ -104,9 +119,8 @@ export function cachedFeaturesLoader(cache) {
           return getCachedFeatures(
             cache,
             extentEvent.target.result.ids,
-            (featureEvent) => {
-              source.addFeature(geoJSON.readFeature(featureEvent.target.result.feature));
-            },
+            (feature) => source.addFeature(feature),
+            success,
             noCacheLoad(() => {
               source.removeLoadedExtent(extent);
               if (failure !== undefined) {
@@ -118,12 +132,7 @@ export function cachedFeaturesLoader(cache) {
         if (extentEvent.target.result.expire > new Date()) {
           loadCachedFeatures();
         } else {
-          noCacheLoad(() => {
-            loadCachedFeatures();
-            if (success !== undefined) {
-              success();
-            }
-          });
+          noCacheLoad(loadCachedFeatures);
         }
       },
       noCacheLoad(() => {
