@@ -17,7 +17,7 @@ function getCachedExtent(cache, extent, success, failure) {
   if (db !== undefined) {
     const extentRequest = db.transaction('extents').objectStore('extents').get([cache, extent]);
     extentRequest.onsuccess = (event) => {
-      (event.target.result !== undefined) ? success(event) : failure(event)
+      if (event.target.result !== undefined) success(event); else failure(event);
     };
     extentRequest.onerror = failure;
   } else {
@@ -31,12 +31,8 @@ function getCachedFeatures(cache, ids, addFeatures, success, failure) {
     let featureFailure = false;
     const transaction = db.transaction('features');
     transaction.oncomplete = () => {
-      addFeatures(features)
-      if (!featureFailure) {
-        success(features)
-      } else {
-        failure()
-      }
+      addFeatures(features);
+      if (!featureFailure) success(features); else failure();
     };
     transaction.onerror = failure;
 
@@ -125,7 +121,7 @@ export function cachedFeaturesLoader(cache) {
           return getCachedFeatures(
             cache,
             extentEvent.target.result.ids,
-            (features) => {source.addFeatures(features)},
+            (features) => { source.addFeatures(features); },
             success,
             noCacheLoad(() => {
               source.removeLoadedExtent(extent);
