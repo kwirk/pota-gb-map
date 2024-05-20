@@ -16,21 +16,28 @@ request.onupgradeneeded = (event) => {
 function getCachedExtent(cache, extent, success, failure) {
   if (db !== undefined) {
     const extentRequest = db.transaction('extents').objectStore('extents').get([cache, extent]);
-    extentRequest.onsuccess = (event) => (
+    extentRequest.onsuccess = (event) => {
       (event.target.result !== undefined) ? success(event) : failure(event)
-    );
+    };
     extentRequest.onerror = failure;
   } else {
     failure();
   }
 }
 
-function getCachedFeatures(cache, ids, featureSuccess, success, failure) {
+function getCachedFeatures(cache, ids, addFeatures, success, failure) {
   if (db !== undefined) {
     const features = [];
     let featureFailure = false;
     const transaction = db.transaction('features');
-    transaction.oncomplete = () => (!featureFailure ? success(features) : failure());
+    transaction.oncomplete = () => {
+      addFeatures(features)
+      if (!featureFailure) {
+        success(features)
+      } else {
+        failure()
+      }
+    };
     transaction.onerror = failure;
 
     const featuresRequest = transaction.objectStore('features');
@@ -40,7 +47,6 @@ function getCachedFeatures(cache, ids, featureSuccess, success, failure) {
         if (event.target.result !== undefined) {
           const feature = geoJSON.readFeature(event.target.result.feature);
           features.push(feature);
-          featureSuccess(feature);
         } else {
           // Missing feature
           featureFailure = true;
@@ -119,7 +125,7 @@ export function cachedFeaturesLoader(cache) {
           return getCachedFeatures(
             cache,
             extentEvent.target.result.ids,
-            (feature) => source.addFeature(feature),
+            (features) => {source.addFeatures(features)},
             success,
             noCacheLoad(() => {
               source.removeLoadedExtent(extent);
