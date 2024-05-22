@@ -4,14 +4,45 @@ import { GeoJSON } from 'ol/format';
 const geoJSON = new GeoJSON({dataProjection: 'EPSG:27700'});
 
 let db;
-const request = indexedDB.open('featureStore', 1);
+const request = indexedDB.open('featureStore', 2);
 request.onsuccess = (event) => {
   db = event.target.result;
 };
 request.onupgradeneeded = (event) => {
-  event.target.result.createObjectStore('extents', {keyPath: ['cache', 'extent']});
-  event.target.result.createObjectStore('features', {keyPath: ['cache', 'id']});
+  if (event.oldVersion === 0) { // New database
+    const extentsStore = event.target.result.createObjectStore('extents', {keyPath: ['cache', 'extent']});
+    extentsStore.createIndex('expire', 'expire', {unique: false});
+    const featuresStore = event.target.result.createObjectStore('features', {keyPath: ['cache', 'id']});
+    featuresStore.createIndex('expire', 'expire', {unique: false});
+  }
+  if (event.oldVersion === 1) { // Upgrade v1 to v2
+    event.target.transaction.objectStore('extents').createIndex('expire', 'expire', {unique: false});
+    const featuresStore = event.target.transaction.objectStore('features');
+    featuresStore.clear(); // Missing expire values. Easier to clear.
+    featuresStore.createIndex('expire', 'expire', {unique: false});
+  }
 };
+
+function delExpiredCache() {
+  const range = IDBKeyRange.upperBound(new Date());
+  const transaction = db.transaction(['extents', 'features'], 'readwrite');
+  const extentsStore = transaction.objectStore('extents');
+  const featuresStore = transaction.objectStore('features');
+  extentsStore.index('expire').openKeyCursor(range).onsuccess = (event) => {
+    const cursor = event.target.result;
+    if (cursor) {
+      extentsStore.delete(cursor.primaryKey);
+      cursor.continue();
+    }
+  };
+  featuresStore.index('expire').openKeyCursor(range).onsuccess = (event) => {
+    const cursor = event.target.result;
+    if (cursor) {
+      featuresStore.delete(cursor.primaryKey);
+      cursor.continue();
+    }
+  };
+}
 
 function getCachedExtent(cache, extent, success, failure) {
   if (db !== undefined) {
@@ -34,7 +65,7 @@ function getCachedFeatures(cache, ids, addFeatures, success, failure) {
       addFeatures(features);
       if (!featureFailure) success(features); else failure();
     };
-    transaction.onerror = failure;
+    transaction.onabort = failure;
 
     const featuresRequest = transaction.objectStore('features');
     ids.forEach((id) => {
@@ -57,15 +88,24 @@ function getCachedFeatures(cache, ids, addFeatures, success, failure) {
 function setCachedFeatures(cache, extent, features) {
   if (db !== undefined) {
     const transaction = db.transaction(['extents', 'features'], 'readwrite');
-    const featuresRequest = transaction.objectStore('features');
-    features.forEach((feature) => {
-      featuresRequest.put({
-        cache, id: feature.getId(), feature: geoJSON.writeFeatureObject(feature, {decimals: 0}),
-      });
-    });
+    transaction.onabort = (event) => {
+      if (event.target.error.name === 'QuotaExceededError') {
+        delExpiredCache();
+      }
+    };
 
     const expire = new Date();
     expire.setDate(expire.getDate() + 14);
+    const featuresRequest = transaction.objectStore('features');
+    features.forEach((feature) => {
+      featuresRequest.put({
+        cache,
+        id: feature.getId(),
+        expire,
+        feature: geoJSON.writeFeatureObject(feature, {decimals: 0}),
+      });
+    });
+
     const extentRequest = transaction.objectStore('extents');
     extentRequest.put({
       cache, extent, expire, ids: features.map((feature) => feature.getId()),
