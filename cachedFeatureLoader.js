@@ -174,7 +174,7 @@ export function cachedFeaturesLoader(cache) {
         if (extentEvent.target.result.expire > new Date()) {
           loadCachedFeatures();
         } else {
-          noCacheLoad(loadCachedFeatures);
+          noCacheLoad(loadCachedFeatures)();
         }
       },
       noCacheLoad(() => {
