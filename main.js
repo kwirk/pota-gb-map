@@ -348,8 +348,8 @@ function triangleStyleFunction(feature, resolution, color) {
   });
 }
 
-function legendBox(color) {
-  return `<div class="box" style="background-color: ${colorOpacity(color)}; border-color: ${color}"></div>`;
+function legendBox(color, border = true) {
+  return `<div class="box" style="background-color: ${colorOpacity(color, border ? 0.2 : 0.5)}; border-color: ${border ? color : colorOpacity(color, 0)}"></div>`;
 }
 
 function legendDot(color) {
@@ -365,16 +365,16 @@ function legendLine(color) {
   return `<div class="line" style="background-color: ${color}"></div>`;
 }
 
-function polygonStyleFunction(feature, resolution, text, color, bStroke = false) {
+function polygonStyleFunction(feature, resolution, text, color, bStroke = false, stroke = true) {
   return new Style({
-    stroke: new Stroke({
+    stroke: stroke ? new Stroke({
       color: bStroke ? '#000000' : color,
       width: bStroke ? 1 : 3,
-    }),
+    }) : undefined,
     fill: new Fill({
-      color: colorOpacity(color),
+      color: colorOpacity(color, stroke ? 0.2 : 0.5),
     }),
-    text: createTextStyle(feature, resolution, text, color, 0),
+    text: text ? createTextStyle(feature, resolution, text, color, 0) : undefined,
   });
 }
 
@@ -489,6 +489,11 @@ const colorFP = 'rgba(109, 179, 63, 1)';
 function polygonStyleFunctionFP(feature, resolution) {
   const text = feature.get('FOREST_PAR');
   return polygonStyleFunction(feature, resolution, text, colorFP);
+}
+
+const colorCROW = 'rgba(255, 255, 0, 1)';
+function polygonStyleFunctionCROW(feature, resolution) {
+  return polygonStyleFunction(feature, resolution, null, colorCROW, false, false);
 }
 
 function lineStyleFunction(feature, resolution, text, color, overflow = true) {
@@ -1055,6 +1060,16 @@ const map = new Map({
     new LayerGroup({
       title: 'Designations',
       layers: [
+        createLayerGroup(
+          `${legendBox(colorCROW, false)} Open Access Land (CRoW Act)`,
+          'CROW',
+          polygonStyleFunctionCROW,
+          'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/CRoW_Act_2000_Access_Layer/FeatureServer/0/query?',
+          null,
+          'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_OPEN_COUNTRY_2014,inspire-nrw:NRW_COMMON_LAND_2014,inspire-nrw:NRW_PUBLIC_FOREST_2014,inspire-nrw:NRW_OTHER_STATUTORY_LAND_2014,inspire-nrw:NRW_OTHER_DEDICATED_LAND&',
+          null,
+          false,
+        ),
         new LayerGroup({
           title: `${legendLine(colorNT)} National Trails / Coast Paths`,
           shortTitle: 'NT',
