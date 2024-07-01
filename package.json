@@ -12,7 +12,7 @@
     "vite-plugin-pwa": "^0.20.0"
   },
   "dependencies": {
-    "lru-cache": "^10.2.2",
+    "lru-cache": "^10.3.0",
     "ol": "^9.2.4",
     "ol-layerswitcher": "^4.1.1",
     "ol-popup": "^5.1.1",
