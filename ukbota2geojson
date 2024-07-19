@@ -17,12 +17,14 @@ if __name__ == "__main__":
         "type": "FeatureCollection",
         "features": features
     }
-    with open(sys.argv[1], newline='', encoding='utf-8-sig') as input_file:
+    with open(sys.argv[1], newline='', encoding='cp1252') as input_file:
         reader = csv.DictReader(input_file)
 
         for row in reader:
+            if row["Scheme"] != "UKBOTA":  # Skip non-UKBOTA
+                continue
             point = transformer.transform(
-                float(row['Latitude']), float(row['Longitude']))
+                float(row['Lat']), float(row['Long']))
             features.append({
                 "type": "Feature",
                 "geometry": {
@@ -30,8 +32,8 @@ if __name__ == "__main__":
                     "coordinates": [round(p) for p in point],
                 },
                 "properties": {
-                    "reference": row["UKBOTA Reference"],
-                    "name": row["Bunker Name"],
+                    "reference": row["Reference"],
+                    "name": row["Name"],
                 }
             })
     json.dump(geojson, sys.stdout, separators=(',', ':'))

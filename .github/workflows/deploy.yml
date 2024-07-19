@@ -39,7 +39,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
       - name: Generate UKBOTA GeoJSON
-        run: curl -JL https://drive.google.com/uc?id=1ea3j9S4VzcDttMPs_9WOj-4L_DzfcUhR | python ukbota2geojson /dev/stdin > data/BOTA.json
+        run: curl -JL https://wwbota.org/wwbota-3/ | python ukbota2geojson /dev/stdin > data/BOTA.json
       - name: Generate ECA/ELA GeoJSON
         run: |
           python ecaela2geojson eca > data/ECA.json
