@@ -1074,7 +1074,7 @@ const map = new Map({
           title: `${legendLine(colorNT)} National Trails / Coast Paths`,
           shortTitle: 'NT',
           combine: true,
-          visible: false,
+          visible: true,
           minZoom: 6,
           layers: [
             vectorLayerEngland(lineStyleFunctionNT, 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/National_Trails_England/FeatureServer/0/query?', 'NT'),
