@@ -9,7 +9,7 @@
   "devDependencies": {
     "@vite-pwa/assets-generator": "^0.2.4",
     "vite": "^5.3.5",
-    "vite-plugin-pwa": "^0.20.0"
+    "vite-plugin-pwa": "^0.20.1"
   },
   "dependencies": {
     "lru-cache": "^11.0.0",
