@@ -17,7 +17,7 @@ if __name__ == "__main__":
         "type": "FeatureCollection",
         "features": features
     }
-    with open(sys.argv[1], newline='', encoding='cp1252') as input_file:
+    with open(sys.argv[1], newline='', encoding='utf-8-sig') as input_file:
         reader = csv.DictReader(input_file)
 
         for row in reader:
