@@ -1081,6 +1081,7 @@ const map = new Map({
             vectorLayerEngland((f, r) => lineStyleFunctionNT(f, r, 'King Charles III England Coast Path', true), 'https://services.arcgis.com/JJzESW51TqeY9uat/ArcGIS/rest/services/England_Coast_Path_Route/FeatureServer/0/query?', 'NTCP'),
             vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&', 'NT'),
             vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&', 'NTCP'),
+            vectorLayerScotland((f, r) => lineStyleFunctionNT(f, r, 'John Muir Way'), 'https://ogc.nature.scot/geoserver/landscape/wfs?service=wfs&typeName=landscape:jmw&', 'NTJMW'),
           ],
         }),
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
