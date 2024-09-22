@@ -1682,6 +1682,12 @@ function layersLinkCallback(newValue) {
   }
 }
 layersLinkCallback(link.track('layers', layersLinkCallback));
+let initialLocate = !link.track('x', () => {});
+const initialZoom = parseFloat(link.track('z', () => {}));
+map.once('movestart', () => { // initial centre map call
+  // Don't move map if user already interacted with it
+  map.on('movestart', () => { initialLocate = false; });
+});
 
 const activeLayers = new Collection();
 LayerSwitcher.forEachRecursive(map, (layer) => {
@@ -1799,6 +1805,15 @@ const layer = new VectorLayer({
 });
 map.addLayer(layer);
 
+function locateFunc(zoom = 12) {
+  if (!source.isEmpty()) {
+    map.getView().fit(source.getExtent(), {
+      maxZoom: zoom,
+      duration: 500,
+    });
+  }
+}
+
 navigator.geolocation.watchPosition(
   (pos) => {
     const coords = [pos.coords.longitude, pos.coords.latitude];
@@ -1810,6 +1825,10 @@ navigator.geolocation.watchPosition(
       ),
       new Feature(new Point(fromLonLat(coords, projection27700))),
     ]);
+    if (initialLocate) {
+      initialLocate = false;
+      locateFunc(initialZoom || 6.01);
+    }
   },
   () => {},
   {
@@ -1820,15 +1839,7 @@ navigator.geolocation.watchPosition(
 const locate = document.createElement('div');
 locate.className = 'ol-control ol-unselectable locate';
 locate.innerHTML = '<button title="Locate me">◎</button>';
-locate.addEventListener('click', () => {
-  if (!source.isEmpty()) {
-    map.getView().fit(source.getExtent(), {
-      maxZoom: 12,
-      duration: 500,
-    });
-  }
-});
-
+locate.addEventListener('click', () => locateFunc());
 map.addControl(
   new Control({
     element: locate,
