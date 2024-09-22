@@ -1264,6 +1264,7 @@ const map = new Map({
           minZoom: 6,
           layers: [
             new VectorLayer({
+              refUrl: 'https://bunkerwiki.org/?s=',
               maxZoom: 11,
               updateWhileInteracting: true,
               updateWhileAnimating: true,
@@ -1287,6 +1288,7 @@ const map = new Map({
               }),
             }),
             new VectorLayer({
+              refUrl: 'https://bunkerwiki.org/?s=',
               minZoom: 11,
               updateWhileInteracting: true,
               updateWhileAnimating: true,
