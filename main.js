@@ -736,7 +736,7 @@ class RepeaterVectorSource extends VectorSource {
               (item) => (
                 vectorSource.band === item.band
                 && vectorSource.types.has(item.type)
-                && item.modeCodes?.filter((x) => (vectorSource.modes.has(x))).length > 0),
+                && item.modeCodes?.filter((x) => (vectorSource.modes.has(x[0]))).length > 0),
             ).forEach((item) => {
               const ngr = item.extraDetails?.ngr;
               if (ngr) {
