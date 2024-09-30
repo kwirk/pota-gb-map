@@ -8,8 +8,6 @@ with [Parks on the Air® (POTA)](https://parksontheair.com/),
 [Summits on the Air (SOTA)](https://www.sota.org.uk/),
 [HuMPs Excluding Marilyns Award (HEMA)](http://hema.org.uk/),
 [UK Bunkers on the Air (UKBOTA)](https://bunkersontheair.org/),
-[English Castles Awards (ECA)](https://englishcastlesawards.uk/),
-[English Lighthouse Awards (ELA)](https://englishlighthouseawards.uk/),
 and [Work All Britain (WAB) Trig Points](https://wab.intermip.net/Trig%20Points%20Award.php)
 references overlaid to help with
 planning activities and identifying the correct boundaries.
@@ -49,8 +47,6 @@ Thanks to Fraser MM0EFI for the suggestion, and [Ordnance Survey](https://www.or
 Thanks to Rich M7GET for the suggestion, and support from Jim M0ZAH and [ETCC UK repeaters](https://ukrepeater.net/) for providing data for UK repeaters.
 
 Thanks to Peter G4MJS for suggestion on adding National Trails and Coast Paths.
-
-Thanks to Bob M0MJA for support with [English Castles Awards](https://englishcastlesawards.uk/) and [English Lighthouse Awards](https://englishlighthouseawards.uk/).
 
 And thanks to all those that manage, run and support the various portable programmes mentioned above, that make portable radio so much more rewarding.
 

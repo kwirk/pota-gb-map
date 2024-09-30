@@ -40,10 +40,6 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Generate UKBOTA GeoJSON
         run: curl -JL https://wwbota.org/wwbota-3/ | python ukbota2geojson /dev/stdin > data/BOTA.json
-      - name: Generate ECA/ELA GeoJSON
-        run: |
-          python ecaela2geojson eca > data/ECA.json
-          python ecaela2geojson ela > data/ELA.json
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
