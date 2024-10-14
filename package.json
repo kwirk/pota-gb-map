@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@vite-pwa/assets-generator": "^0.2.4",
-    "vite": "^5.4.8",
+    "vite": "^5.4.9",
     "vite-plugin-pwa": "^0.20.5"
   },
   "dependencies": {
