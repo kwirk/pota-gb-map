@@ -1364,7 +1364,7 @@ const map = new Map({
                 failure(); // shouldn't ever get here
                 return;
               }
-              const url = `https://api2.sota.org.uk/api/associations/${code}`;
+              const url = `https://api-db2.sota.org.uk/api/associations/${code}`;
               const xhr = new XMLHttpRequest();
               xhr.open('GET', url);
               xhr.responseType = 'json';
@@ -1377,7 +1377,7 @@ const map = new Map({
                 if (xhr.status === 200) {
                   xhr.response.regions.forEach((region) => {
                     const features = [];
-                    const rUrl = `https://api2.sota.org.uk/api/regions/${region.associationCode}/${region.regionCode}`;
+                    const rUrl = `https://api-db2.sota.org.uk/api/regions/${region.associationCode}/${region.regionCode}`;
                     const rXhr = new XMLHttpRequest();
                     rXhr.open('GET', rUrl);
                     rXhr.responseType = 'json';
