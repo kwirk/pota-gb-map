@@ -21,6 +21,7 @@ import {register} from 'ol/proj/proj4';
 import {Projection, fromLonLat, transformExtent} from 'ol/proj';
 import {
   buffer,
+  containsCoordinate,
   extend,
   getCenter,
   intersects,
@@ -1639,13 +1640,19 @@ map.on('movestart', () => {
 const source = new VectorSource();
 const layer = new VectorLayer({
   source: source,
-  style: new Style({
-    image: new CircleStyle({
-      radius: 5,
-      fill: new Fill({color: '#AAAAFF'}),
-      stroke: new Stroke({color: '#0000FF', width: 1}),
-    }),
-  }),
+  style: (feature, resolution) => {
+    if (feature.getGeometry().getType() === 'Point') {
+      return new Style({
+        text: createTextStyle(feature, resolution, feature.get('text'), '#AAAAFF', 2),
+        image: new CircleStyle({
+          radius: 5,
+          fill: new Fill({color: '#AAAAFF'}),
+          stroke: new Stroke({color: '#0000FF', width: 1}),
+        }),
+      });
+    }
+    return polygonStyleFunction(feature, resolution, null, '#AAAAFF50');
+  },
 });
 map.addLayer(layer);
 
@@ -1662,16 +1669,22 @@ navigator.geolocation.watchPosition(
   (pos) => {
     const coords = [pos.coords.longitude, pos.coords.latitude];
     const accuracy = circular(coords, pos.coords.accuracy);
+    const [e, n] = fromLonLat(coords, projection27700);
     source.clear(true);
-    source.addFeatures([
-      new Feature(
-        accuracy.transform('EPSG:4326', projection27700),
-      ),
-      new Feature(new Point(fromLonLat(coords, projection27700))),
-    ]);
-    if (initialLocate) {
-      initialLocate = false;
-      locateFunc(initialZoom || 6.01);
+    if (containsCoordinate(projection27700.getExtent(), [e, n])) {
+      source.addFeatures([
+        new Feature(
+          accuracy.transform('EPSG:4326', projection27700),
+        ),
+        new Feature({
+          geometry: new Point([e, n]),
+          text: `${getMaidenheadGrid(...coords, 3)}\n${osGridPrefixes[Math.floor(n / 100000)][Math.floor(e / 100000)]}${Math.floor((e % 100000) / 10000)}${Math.floor((n % 100000) / 10000)}`,
+        }),
+      ]);
+      if (initialLocate) {
+        initialLocate = false;
+        locateFunc(initialZoom || 6.01);
+      }
     }
   },
   () => {},
