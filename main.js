@@ -86,6 +86,31 @@ const osGridPrefixes = [
   ['HL', 'HM', 'HN', 'HO', 'HP', 'JL', 'JM'],
 ];
 
+function OSGBPrefix(e, n) {
+  return osGridPrefixes?.[Math.floor(n / 100000)]?.[Math.floor(e / 100000)];
+}
+
+function IrishPrefix(e, n) {
+  const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+  return alphabet[20 - Math.floor(n / 100000) * 5 + Math.floor(e / 100000)];
+}
+
+function MGRSPrefix(e, n) {
+  const eAlphabet = 'STUVWXYZ';
+  const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
+  const ePrefix = eAlphabet[Math.floor(e / 100000) - 1];
+  const nPrefix = nAlphabet[(Math.floor(n / 100000) + 5) % 20]; // zone 'F' start
+  return ePrefix + nPrefix;
+}
+
+function WABSquare(e, n, prefixFunc, projection) {
+  const [eT, nT] = proj4('EPSG:27700', projection, [e, n]);
+  const prefix = prefixFunc(eT, nT);
+  if (prefix) {
+    return `${prefix}${Math.floor((eT % 100000) / 10000)}${Math.floor((nT % 100000) / 10000)}`;
+  }
+}
+
 function osGridToEastingNorthing(ngr) {
   const prefix = ngr.slice(0, 2);
   const precision = (ngr.length - 2) / 2;
@@ -161,6 +186,7 @@ const extentWales = transformExtent([-5.416260, 51.344339, -2.644958, 53.471700]
 const extentNorthernIreland = transformExtent([-8.206787, 53.994854, -5.405273, 55.404070], 'EPSG:4326', projection27700);
 const extentJersey = transformExtent([-2.392273, 48.855967, -1.789261, 49.317255], 'EPSG:4326', projection27700);
 const extentGuernsey = transformExtent([-3.065808, 49.327176, -2.081909, 49.959632], 'EPSG:4326', projection27700);
+const extentChannelIslands = extend([...extentJersey], extentGuernsey);
 const extentIsleOfMan = transformExtent([-4.899902, 53.972864, -4.196777, 54.490138], 'EPSG:4326', projection27700);
 const extentIreland = transformExtent([-11.096191, 51.594714, -5.361328, 55.472483], 'EPSG:4326', projection27700);
 
@@ -183,6 +209,20 @@ function extentToCode(extent) {
     default:
       return null;
   }
+}
+
+function locationToWABSquare(e, n) {
+  let prefixFunc = OSGBPrefix;
+  let projection = 'EPSG:27700';
+
+  if (containsCoordinate(extentChannelIslands, [e, n])) {
+    prefixFunc = MGRSPrefix;
+    projection = 'EPSG:32630';
+  } else if (containsCoordinate(extentIreland, [e, n])) {
+    prefixFunc = IrishPrefix;
+    projection = 'EPSG:29902';
+  }
+  return WABSquare(e, n, prefixFunc, projection);
 }
 
 const GeoJSON27700 = new GeoJSON({
@@ -894,7 +934,7 @@ const map = new Map({
           layers: [[1.5, 5], [5, 20]].map((zoom, level) => new VectorLayer({
             minZoom: zoom[0],
             maxZoom: zoom[1],
-            extent: extend([...extentJersey], extentGuernsey),
+            extent: extentChannelIslands,
             style: gridStyle,
             source: new VectorSource({
               overlaps: false,
@@ -902,13 +942,7 @@ const map = new Map({
               loader: function loader(extent, resolution, projection, success) {
                 return gridLoader(
                   this,
-                  (e, n) => {
-                    const eAlphabet = 'STUVWXYZ';
-                    const nAlphabet = 'ABCDEFGHJKLMNPQRSTUV';
-                    const ePrefix = eAlphabet[Math.floor(e / 100000) - 1];
-                    const nPrefix = nAlphabet[(Math.floor(n / 100000) + 5) % 20]; // zone 'F' start
-                    return ePrefix + nPrefix;
-                  },
+                  MGRSPrefix,
                   extent,
                   'EPSG:32630',
                   success,
@@ -934,11 +968,7 @@ const map = new Map({
               loader: function loader(extent, resolution, projection, success) {
                 return gridLoader(
                   this,
-                  (e, n) => {
-                    if (e < 0) { return null; }
-                    const alphabet = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
-                    return alphabet[20 - Math.floor(n / 100000) * 5 + Math.floor(e / 100000)];
-                  },
+                  (e, n) => ((e >= 0) ? IrishPrefix(e, n) : null),
                   extent,
                   'EPSG:29902',
                   success,
@@ -966,7 +996,7 @@ const map = new Map({
                   this,
                   (e, n) => {
                     try {
-                      return osGridPrefixes[Math.floor(n / 100000)][Math.floor(e / 100000)];
+                      return OSGBPrefix(e, n);
                     } catch (error) {
                       return null;
                     }
@@ -1678,7 +1708,7 @@ navigator.geolocation.watchPosition(
         ),
         new Feature({
           geometry: new Point([e, n]),
-          text: `${getMaidenheadGrid(...coords, 3)}\n${osGridPrefixes[Math.floor(n / 100000)][Math.floor(e / 100000)]}${Math.floor((e % 100000) / 10000)}${Math.floor((n % 100000) / 10000)}`,
+          text: `${getMaidenheadGrid(...coords, 3)}\n${locationToWABSquare(e, n)}`,
         }),
       ]);
       if (initialLocate) {
