@@ -37,7 +37,7 @@ export default {
             },
           },
           {
-            urlPattern: /^https:\/\/api2.sota.org.uk\/api\//i,
+            urlPattern: /^https:\/\/api-db2.sota.org.uk\/api\//i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'sota',
