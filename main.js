@@ -1708,15 +1708,14 @@ navigator.geolocation.watchPosition(
     const [e, n] = fromLonLat(coords, projection27700);
     source.clear(true);
     if (containsCoordinate(projection27700.getExtent(), [e, n])) {
-      source.addFeatures([
-        new Feature(
-          accuracy.transform('EPSG:4326', projection27700),
-        ),
-        new Feature({
-          geometry: new Point([e, n]),
-          text: `${getMaidenheadGrid(...coords, 3)}\n${locationToWABSquare(e, n)}`,
-        }),
-      ]);
+      const features = [new Feature({
+        geometry: new Point([e, n]),
+        text: `${getMaidenheadGrid(...coords, 3)}\n${locationToWABSquare(e, n)}`,
+      })];
+      if (pos.coords.accuracy <= 1000) {
+        features.push(new Feature(accuracy.transform('EPSG:4326', projection27700)));
+      }
+      source.addFeatures(features);
       if (initialLocate) {
         initialLocate = false;
         locateFunc(initialZoom || 6.01);
