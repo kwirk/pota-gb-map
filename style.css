@@ -10,8 +10,17 @@ html, body {
   bottom: 0;
   width: 100%;
 }
+
 .locate {
   top: 6em;
+  left: .5em;
+}
+.text-increase {
+  top: 8em;
+  left: .5em;
+}
+.text-decrease {
+  top: 10em;
   left: .5em;
 }
 

@@ -60,6 +60,10 @@ import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 
+const mapOptions = {
+  textSize: parseFloat(localStorage.getItem('textSize')) || 1.0,
+};
+
 // Setup the EPSG:27700 (British National Grid) projection.
 proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs');
 proj4.defs('EPSG:29902', '+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +a=6377340.189 +rf=299.3249646 +towgs84=482.5,-130.6,564.6,-1.042,-0.214,-0.631,8.15 +units=m +no_defs +type=crs');
@@ -305,6 +309,7 @@ function gridStyle(feature) {
 function createTextStyle(feature, resolution, text, color, offset = 15) {
   return new Text({
     text: text,
+    scale: mapOptions.textSize,
     font: 'bold ui-rounded',
     textAlign: 'center',
     fill: new Fill({color: '#000000'}),
@@ -544,6 +549,7 @@ function lineStyleFunction(feature, resolution, text, color, overflow = true) {
     }),
     text: new Text({
       text: text,
+      scale: mapOptions.textSize,
       font: 'bold ui-rounded',
       placement: 'line',
       repeat: 500,
@@ -1730,6 +1736,37 @@ locate.addEventListener('click', () => locateFunc());
 map.addControl(
   new Control({
     element: locate,
+  }),
+);
+
+const textIncrease = document.createElement('div');
+textIncrease.className = 'ol-control ol-unselectable text-increase';
+textIncrease.innerHTML = '<button title="Text Size Increase"><div style="font-size: x-large">A</div></button>';
+textIncrease.addEventListener('click', () => {
+  mapOptions.textSize ||= 1.0;
+  mapOptions.textSize += 0.1;
+  localStorage.setItem('textSize', mapOptions.textSize.toFixed(1));
+  map.redrawText();
+});
+map.addControl(
+  new Control({
+    element: textIncrease,
+  }),
+);
+
+const textDecrease = document.createElement('div');
+textDecrease.className = 'ol-control ol-unselectable text-decrease';
+textDecrease.innerHTML = '<button title="Text Size Decrease"><div style="font-size: x-small">A</div></button>';
+textDecrease.addEventListener('click', () => {
+  mapOptions.textSize ||= 1.0;
+  mapOptions.textSize -= 0.1;
+  mapOptions.textSize = Math.max(mapOptions.textSize, 0.1);
+  localStorage.setItem('textSize', mapOptions.textSize.toFixed(1));
+  map.redrawText();
+});
+map.addControl(
+  new Control({
+    element: textDecrease,
   }),
 );
 
