@@ -62,6 +62,7 @@ import TRIGPOINTS from './data/trigpoints.json?url';
 
 const mapOptions = {
   textSize: parseFloat(localStorage.getItem('textSize')) || 1.0,
+  activeLayers: new Collection(localStorage.getItem('activeLayers')?.split(' ') || []),
 };
 
 // Setup the EPSG:27700 (British National Grid) projection.
@@ -1546,8 +1547,8 @@ const map = new Map({
 
 const link = new Link({params: ['x', 'y', 'z'], replace: true});
 function layersLinkCallback(newValue) {
-  if (newValue) { // only update if no null
-    const layers = newValue.split(' ');
+  const layers = newValue?.split(' ') || mapOptions.activeLayers.getArray();
+  if (layers?.length) { // only update if no null
     LayerSwitcher.forEachRecursive(map, (layer) => {
       const shortTitle = layer.get('shortTitle');
       if (shortTitle) {
@@ -1570,25 +1571,29 @@ map.once('movestart', () => { // initial centre map call
   map.on('movestart', () => { initialLocate = false; });
 });
 
-const activeLayers = new Collection();
 LayerSwitcher.forEachRecursive(map, (layer) => {
   const shortTitle = layer.get('shortTitle');
   if (shortTitle) {
-    if (layer.getVisible()) {
-      activeLayers.push(shortTitle);
+    if (layer.getVisible() && !mapOptions.activeLayers.getArray().includes(shortTitle)) {
+      mapOptions.activeLayers.push(shortTitle);
     }
     layer.on('change:visible', () => {
       if (layer.getVisible()) {
-        activeLayers.push(shortTitle);
+        mapOptions.activeLayers.push(shortTitle);
       } else {
-        activeLayers.remove(shortTitle);
+        mapOptions.activeLayers.remove(shortTitle);
       }
     });
   }
 });
-activeLayers.on('change:length', () => {
-  link.update('layers', activeLayers.getArray().join(' '));
+mapOptions.activeLayers.on('change:length', () => {
+  const layerString = [...new Set(mapOptions.activeLayers.getArray())].join(' ');
+  link.update('layers', layerString);
+  localStorage.setItem('activeLayers', layerString);
 });
+if (mapOptions.activeLayers.getArray().length) {
+  link.update('layers', mapOptions.activeLayers.getArray().join(' '));
+}
 map.addInteraction(link);
 
 // Close attribution on map move; open when layers change.
