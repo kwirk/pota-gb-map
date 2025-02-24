@@ -55,4 +55,61 @@ if __name__ == "__main__":
             })
         except Exception as err:
             print('GI', i, str(err), file=sys.stderr)
+    df = read_ods(sys.argv[1], 'GD')
+    for i, row in df.iterrows():
+        try:
+            lat, lon = re.match(r'.+ ([0-9]+\.[0-9]+), (-[0-9]+\.[0-9]+)', row.iloc[5]).groups()
+            point = transformer.transform(
+                float(lat.replace(' ', '')), float(lon.replace(' ', '')))
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(p) for p in point],
+                },
+                "properties": {
+                    "reference": row.iloc[0],
+                    "name": row.iloc[3],
+                }
+            })
+        except Exception as err:
+            print('GD', i, str(err), file=sys.stderr)
+    df = read_ods(sys.argv[1], 'GJ')
+    for i, row in df.iterrows():
+        try:
+            lat, lon = re.match(r'(?:.+ |^)([0-9]+\.[0-9]+), (-[0-9]+\.[0-9]+)', row.iloc[4]).groups()
+            point = transformer.transform(
+                float(lat.replace(' ', '')), float(lon.replace(' ', '')))
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(p) for p in point],
+                },
+                "properties": {
+                    "reference": row.iloc[0],
+                    "name": row.iloc[3],
+                }
+            })
+        except Exception as err:
+            print('GJ', i, str(err), file=sys.stderr)
+    df = read_ods(sys.argv[1], 'GU')
+    for i, row in df.iterrows():
+        try:
+            lat, lon = re.match(r'(?:.+ |^)([0-9]+\.[0-9]+), (-[0-9]+\.[0-9]+)', row.iloc[4]).groups()
+            point = transformer.transform(
+                float(lat.replace(' ', '')), float(lon.replace(' ', '')))
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(p) for p in point],
+                },
+                "properties": {
+                    "reference": row.iloc[0],
+                    "name": row.iloc[3],
+                }
+            })
+        except Exception as err:
+            print('GU', i, str(err), file=sys.stderr)
     json.dump(geojson, sys.stdout, separators=(',', ':'))
