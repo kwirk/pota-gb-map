@@ -58,6 +58,7 @@ import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
+import WCA from './data/WCA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 
 const mapOptions = {
@@ -1291,6 +1292,83 @@ const map = new Map({
             format: GeoJSON27700,
             url: TRIGPOINTS,
           }),
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(50, 180, 150, 0.5)')} World Castles Award`,
+          shortTitle: 'WCA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(50, 180, 150, 1)', 1000 / resolution),
+              source: new VectorSource({
+                attributions: 'WCA&nbsp;references:<a href="http://wcagroup.org" target="_blank">©&nbsp;World&nbsp;Castles&nbsp;Award</a>.',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    WCA,
+                    (features) => {
+                      vectorSource.addFeatures(features);
+                      success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(50, 180, 150, 1)', true),
+              source: new VectorSource({
+                attributions: 'WCA&nbsp;references:<a href="http://wcagroup.org" target="_blank">©&nbsp;World&nbsp;Castles&nbsp;Award</a>.',
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    WCA,
+                    (features) => {
+                      const newFeatures = [];
+                      const expandedExtent = buffer(extent, 1000); // To capture centre point
+                      features.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
+                            const x = centerXY[0] + Math.cos(-angle) * 1000;
+                            const y = centerXY[1] + Math.sin(-angle) * 1000;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId()); // ID reset on clone
+                          newFeatures.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+          ],
         }),
         new LayerGroup({
           title: `${legendDot('rgba(122, 174, 0, 0.5)')} UK Bunkers on the Air`,

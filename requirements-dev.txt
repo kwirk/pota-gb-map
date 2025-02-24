@@ -1,2 +1,2 @@
 pyproj
-pandas[html]
+pandas-ods-reader

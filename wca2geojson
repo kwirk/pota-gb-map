@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+"""
+Simple script to convert WCA to GeoJson EPSG:27700
+"""
+import json
+import re
+import sys
+
+from pandas_ods_reader import read_ods
+from pyproj import Transformer
+
+if __name__ == "__main__":
+
+    transformer = Transformer.from_crs(4326, 27700)
+
+    features = []
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features
+    }
+    df = read_ods(sys.argv[1], 'G')
+    for i, row in df.iterrows():
+        try:
+            point = transformer.transform(
+                float(row.iloc[5]), float(row.iloc[6]))
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(p) for p in point],
+                },
+                "properties": {
+                    "reference": row.iloc[0],
+                    "name": row.iloc[3],
+                }
+            })
+        except Exception as err:
+            print('G', i, str(err), file=sys.stderr)
+    df = read_ods(sys.argv[1], 'GI')
+    for i, row in df.iterrows():
+        try:
+            lat, lon = re.match(r'([0-9]+\.[0-9]+),?(-[0-9]+\.[0-9]+)', row.iloc[6].replace(' ', '')).groups()
+            point = transformer.transform(
+                float(lat.replace(' ', '')), float(lon.replace(' ', '')))
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(p) for p in point],
+                },
+                "properties": {
+                    "reference": row.iloc[0],
+                    "name": row.iloc[3],
+                }
+            })
+        except Exception as err:
+            print('GI', i, str(err), file=sys.stderr)
+    json.dump(geojson, sys.stdout, separators=(',', ':'))

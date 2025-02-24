@@ -4,5 +4,4 @@ dist
 
 # Data sources
 data/BOTA.json
-data/ECA.json
-data/ELA.json
+data/WCA.json
