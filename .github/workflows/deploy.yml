@@ -39,10 +39,14 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
       - name: Generate UKBOTA GeoJSON
-        run: curl -JL https://wwbota.org/wwbota-3/ | python ukbota2geojson /dev/stdin > data/BOTA.json
+        run: |
+          curl -OJL https://wwbota.org/wwbota-3
+          md5sum wwbota-3
+          python ukbota2geojson wwbota-3 > data/BOTA.json
       - name: Generate WCA GeoJSON
         run: |
           curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
+          md5sum WCALIST.ods
           python wca2geojson WCALIST.ods > data/WCA.json
       - name: Set up Node
         uses: actions/setup-node@v4
