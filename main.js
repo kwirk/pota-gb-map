@@ -60,6 +60,7 @@ import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import WCA from './data/WCA.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
+import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 
 const mapOptions = {
   textSize: parseFloat(localStorage.getItem('textSize')) || 1.0,
@@ -1277,21 +1278,37 @@ const map = new Map({
     new LayerGroup({
       title: 'Programmes',
       layers: [
-        new VectorLayer({
-          title: `${legendDot('rgba(255, 100, 82, 0.5)')} Trigpoints (WAB Award)`,
+        new LayerGroup({
+          title: `${legendDot('rgba(255, 100, 82, 0.5)')} Trigpoints`,
           shortTitle: 'TRIG',
-          refUrl: 'https://trigpointing.uk/trig/',
+          combine: true,
           visible: false,
           minZoom: 6,
-          updateWhileInteracting: true,
-          updateWhileAnimating: true,
-          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
-          source: new VectorSource({
-            attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
-            projection: projection27700,
-            format: GeoJSON27700,
-            url: TRIGPOINTS,
-          }),
+          layers: [
+            new VectorLayer({
+              refUrl: 'https://trigpointing.uk/trig/',
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
+              source: new VectorSource({
+                attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: TRIGPOINTS,
+              }),
+            }),
+            new VectorLayer({
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
+              source: new VectorSource({
+                attributions: 'Trigpoints NI:&nbsp;compiled by Ross McDonald.',
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: OSNI_TRIGPOINTS,
+              }),
+            }),
+          ],
         }),
         new LayerGroup({
           title: `${legendDot('rgba(50, 180, 150, 0.5)')} World Castles Award`,
