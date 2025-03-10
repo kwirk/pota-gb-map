@@ -26,7 +26,7 @@ import {
   getCenter,
   intersects,
 } from 'ol/extent';
-import {EsriJSON, GeoJSON} from 'ol/format';
+import {EsriJSON, GeoJSON, MVT} from 'ol/format';
 import {
   Circle as CircleStyle,
   Fill,
@@ -48,6 +48,10 @@ import Link from 'ol/interaction/Link';
 import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 import { LRUCache } from 'lru-cache';
+
+import VectorTileLayer from 'ol/layer/VectorTile';
+import VectorTileSource from 'ol/source/VectorTile';
+import { applyStyle } from 'ol-mapbox-style';
 
 import {cachedFeaturesLoader, cacheGridStrategy} from './cachedFeatureLoader';
 
@@ -872,20 +876,24 @@ const map = new Map({
     new LayerGroup({
       title: 'Base maps',
       layers: [
-        new TileLayer({
+        new VectorTileLayer({
           title: 'Ordnance Survey',
           shortTitle: 'OS',
           type: 'base',
           visible: false,
           extent: projection27700.getExtent(),
-          source: new XYZ({
+          declutter: true,
+          source: new VectorTileSource({
             attributions: 'Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
             projection: projection27700,
+            format: new MVT(),
             tileGrid: new TileGrid({
-              origin: [-238375.0, 1376256.0],
-              resolutions: [896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75],
+              extent: [-238375, 0, 900000, 1376256],
+              origin: [-238375, 1376256],
+              resolutions: [...Array(16).keys().map((i) => 3584 / (2 ** i))],
+              tileSize: 512,
             }),
-            url: `https://api.os.uk/maps/raster/v1/zxy/Light_27700/{z}/{x}/{y}.png?key=${import.meta.env.VITE_OS_APIKEY}`,
+            url: `https://api.os.uk/maps/vector/v1/vts/tile/{z}/{y}/{x}.pbf?key=${import.meta.env.VITE_OS_APIKEY}`,
           }),
         }),
         new ImageLayer({
@@ -1639,6 +1647,23 @@ const map = new Map({
     }),
   ],
 });
+
+applyStyle(
+  map.getLayers().getArray()[0].getLayers().getArray()[0],
+  'https://raw.githubusercontent.com/OrdnanceSurvey/OS-Vector-Tile-API-Stylesheets/refs/heads/main/OS_VTS_27700_Light.json',
+  {
+    resolutions: [...Array(16).keys().map((i) => 3584 / (2 ** i))],
+    transformRequest(url, type) {
+      if (type !== 'Style' && url.startsWith('https://api.os.uk')) {
+        url = new URL(url);
+        if (!url.searchParams.has('key')) url.searchParams.append('key', import.meta.env.VITE_OS_APIKEY);
+        if (!url.searchParams.has('srs')) url.searchParams.append('srs', 27700);
+        return new Request(url);
+      }
+      return undefined;
+    },
+  },
+);
 
 const link = new Link({params: ['x', 'y', 'z'], replace: true});
 function layersLinkCallback(newValue) {
