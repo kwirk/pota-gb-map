@@ -884,7 +884,7 @@ const map = new Map({
           extent: projection27700.getExtent(),
           declutter: true,
           source: new VectorTileSource({
-            attributions: 'Map:&nbsp;Contains&nbsp;OS&nbsp;data&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;rights&nbsp;YYYY.'.replace('YYYY', new Date().getFullYear()),
+            attributions: 'Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
             projection: projection27700,
             format: new MVT(),
             tileGrid: new TileGrid({
@@ -1648,9 +1648,8 @@ const map = new Map({
   ],
 });
 
-const osLayer = map.getLayers().getArray()[0].getLayers().getArray()[0];
 applyStyle(
-  osLayer,
+  map.getLayers().getArray()[0].getLayers().getArray()[0],
   'https://raw.githubusercontent.com/OrdnanceSurvey/OS-Vector-Tile-API-Stylesheets/refs/heads/main/OS_VTS_27700_Light.json',
   {
     resolutions: [...Array(16).keys().map((i) => 3584 / (2 ** i))],
@@ -1665,17 +1664,6 @@ applyStyle(
     },
   },
 );
-map.on('rendercomplete', () => {
-  const brandingElem = document.getElementById('os-api-branding');
-  const scaleElem = document.getElementsByClassName('ol-scale-line')[0];
-  if (brandingElem && osLayer.getVisible()) {
-    brandingElem.style.display = 'block';
-    scaleElem.style.display = 'none';
-  } else if (brandingElem) {
-    brandingElem.style.display = 'none';
-    scaleElem.style.display = 'block';
-  }
-});
 
 const link = new Link({params: ['x', 'y', 'z'], replace: true});
 function layersLinkCallback(newValue) {

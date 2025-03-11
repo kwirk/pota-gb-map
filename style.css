@@ -92,23 +92,3 @@ li {
   background-position: center !important;
   background-size: cover;
 }
-
-.os-api-branding {
-  position: absolute;
-  bottom: 0;
-  margin: 0;
-  display: block;
-  z-index: 1000;
-  pointer-events: none;
-}
-
-.os-api-branding.logo {
-  left: 0;
-  padding: 8px;
-  width: 90px;
-  height: 24px;
-  background-image: url(https://raw.githubusercontent.com/OrdnanceSurvey/os-api-branding/refs/heads/main/img/os-logo-maps.svg);
-  background-position: center;
-  background-repeat: no-repeat;
-  box-sizing: content-box;
-}
