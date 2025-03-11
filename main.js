@@ -49,6 +49,10 @@ import LayerSwitcher from 'ol-layerswitcher';
 import Popup from 'ol-popup';
 import { LRUCache } from 'lru-cache';
 
+import VectorTileLayer from 'ol/layer/VectorTile';
+import VectorTileSource from 'ol/source/VectorTile';
+import { applyStyle } from 'ol-mapbox-style';
+
 import {cachedFeaturesLoader, cacheGridStrategy} from './cachedFeatureLoader';
 
 import NI_AONB from './data/NI_AONB.json?url';
@@ -872,20 +876,38 @@ const map = new Map({
     new LayerGroup({
       title: 'Base maps',
       layers: [
-        new TileLayer({
+        new VectorTileLayer({
           title: 'Ordnance Survey',
           shortTitle: 'OS',
           type: 'base',
           visible: false,
-          extent: projection27700.getExtent(),
-          source: new XYZ({
-            attributions: 'Map:&nbsp;OS&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;right&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
+          extent: [-238375, 0, 900000, 1376256],
+          declutter: true,
+          source: new VectorTileSource({
+            attributions: 'Map:&nbsp;Contains&nbsp;OS&nbsp;data&nbsp;©Crown&nbsp;copyright&nbsp;and&nbsp;database&nbsp;rights&nbsp;YYYY.'.replace('YYYY', new Date().getFullYear()),
             projection: projection27700,
             tileGrid: new TileGrid({
-              origin: [-238375.0, 1376256.0],
-              resolutions: [896.0, 448.0, 224.0, 112.0, 56.0, 28.0, 14.0, 7.0, 3.5, 1.75],
+              origin: [-238375, 1376256],
+              resolutions: [
+                3584,
+                1792,
+                896,
+                448,
+                224,
+                112,
+                56,
+                28,
+                14,
+                7,
+                3.5,
+                1.75,
+                0.875,
+                0.4375,
+                0.21875,
+                0.109375,
+              ],
+              tileSize: 512,
             }),
-            url: `https://api.os.uk/maps/raster/v1/zxy/Light_27700/{z}/{x}/{y}.png?key=${import.meta.env.VITE_OS_APIKEY}`,
           }),
         }),
         new ImageLayer({
@@ -1638,6 +1660,57 @@ const map = new Map({
       ],
     }),
   ],
+});
+
+const osLayer = map.getLayers().getArray()[0].getLayers().getArray()[0];
+applyStyle(
+  osLayer,
+  'https://raw.githubusercontent.com/OrdnanceSurvey/OS-Vector-Tile-API-Stylesheets/refs/heads/main/OS_VTS_27700_Light.json',
+  {
+    resolutions: [
+      3584,
+      1792,
+      896,
+      448,
+      224,
+      112,
+      56,
+      28,
+      14,
+      7,
+      3.5,
+      1.75,
+      0.875,
+      0.4375,
+      0.21875,
+      0.109375,
+    ],
+    transformRequest(url, type) {
+      if (type !== 'Style' && url.startsWith('https://api.os.uk')) {
+        url = new URL(url);
+        if (!url.searchParams.has('key')) url.searchParams.append('key', import.meta.env.VITE_OS_APIKEY);
+        if (!url.searchParams.has('srs')) url.searchParams.append('srs', 27700);
+        return new Request(url);
+      }
+      return undefined;
+    },
+  },
+);
+
+function osAPIBranding() {
+  const brandingElem = document.getElementById('os-api-branding');
+  const scaleElem = document.getElementsByClassName('ol-scale-line')[0];
+  if (brandingElem && osLayer.getVisible()) {
+    brandingElem.style.display = 'block';
+    scaleElem.style.display = 'none';
+  } else if (brandingElem) {
+    brandingElem.style.display = 'none';
+    scaleElem.style.display = 'block';
+  }
+}
+map.once('rendercomplete', () => {
+  osAPIBranding();
+  osLayer.on('change:visible', osAPIBranding);
 });
 
 const link = new Link({params: ['x', 'y', 'z'], replace: true});
