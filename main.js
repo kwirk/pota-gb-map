@@ -1700,12 +1700,18 @@ applyStyle(
 function osAPIBranding() {
   const brandingElem = document.getElementById('os-api-branding');
   const scaleElem = document.getElementsByClassName('ol-scale-line')[0];
-  if (brandingElem && osLayer.getVisible()) {
-    brandingElem.style.display = 'block';
-    scaleElem.style.display = 'none';
-  } else if (brandingElem) {
-    brandingElem.style.display = 'none';
-    scaleElem.style.display = 'block';
+  if (osLayer.getVisible()) {
+    osLayer.setDeclutter(true);
+    if (brandingElem) {
+      brandingElem.style.display = 'block';
+      scaleElem.style.display = 'none';
+    }
+  } else {
+    osLayer.setDeclutter(false);
+    if (brandingElem) {
+      brandingElem.style.display = 'none';
+      scaleElem.style.display = 'block';
+    }
   }
 }
 map.once('rendercomplete', () => {
