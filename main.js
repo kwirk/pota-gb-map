@@ -9,7 +9,6 @@ import LayerGroup from 'ol/layer/Group';
 import ImageLayer from 'ol/layer/Image';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
-import BingMaps from 'ol/source/BingMaps';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
 import RasterSource from 'ol/source/Raster';
@@ -819,24 +818,17 @@ class RepeaterVectorSource extends VectorSource {
   }
 }
 
-const bingGroup = new LayerGroup({
-  title: 'Bing Imagery',
+const msImageryAttributions = ['Imagery:', ''];
+const msImageryLayer = new TileLayer({
+  title: 'Microsoft Imagery',
   shortTitle: 'BING',
   type: 'base',
-  combine: true,
   visible: false,
-  layers: [],
-});
-
-bingGroup.once('change:visible', () => {
-  // Callback to only set layer when used
-  // to avoid using API credits unnecessarily
-  bingGroup.getLayers().push(new TileLayer({
-    source: new BingMaps({
-      key: import.meta.env.VITE_BING_APIKEY,
-      imagerySet: 'Aerial',
-    }),
-  }));
+  source: new XYZ({
+    attributions: () => (msImageryAttributions),
+    crossOrigin: 'cors',
+    url: `https://eu.atlas.microsoft.com/map/tile?api-version=2024-04-01&tilesetId=microsoft.imagery&zoom={z}&x={x}&y={y}&tileSize=256&subscription-key=${import.meta.env.VITE_AZURE_APIKEY}`,
+  }),
 });
 
 // Used for layers switching between Circle and Polygon styles
@@ -951,7 +943,7 @@ const map = new Map({
             url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
-        bingGroup,
+        msImageryLayer,
       ],
     }),
     new LayerGroup({
@@ -1718,6 +1710,19 @@ map.once('rendercomplete', () => {
   osAPIBranding();
   osLayer.on('change:visible', osAPIBranding);
 });
+
+function msImageryAttribution() {
+  if (msImageryLayer.getVisible()) {
+    const view = map.getView();
+    const extent = transformExtent(view.calculateExtent(), projection27700, 'EPSG:4326');
+    const msImagerySource = msImageryLayer.getSource();
+    const zoom = msImagerySource.getTileGrid().getZForResolution(view.getResolution(), 1);
+    const url = `https://eu.atlas.microsoft.com/map/attribution?api-version=2024-04-01&tilesetId=microsoft.imagery&zoom=${zoom}&bounds=${extent}&subscription-key=${import.meta.env.VITE_AZURE_APIKEY}`;
+    fetch(url).then((response) => response.json()).then((json) => { msImageryAttributions[1] = json.copyrights.join(' '); });
+  }
+}
+map.on('moveend', msImageryAttribution);
+msImageryLayer.on('change:visible', msImageryAttribution);
 
 const link = new Link({params: ['x', 'y', 'z'], replace: true});
 function layersLinkCallback(newValue) {
