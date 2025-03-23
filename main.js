@@ -1303,7 +1303,7 @@ const map = new Map({
               refUrl: 'https://trigpointing.uk/trig/',
               updateWhileInteracting: true,
               updateWhileAnimating: true,
-              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 100 / resolution),
               source: new VectorSource({
                 attributions: 'Trigpoints:&nbsp;<a href="https://trigpointing.uk/" target="_blank">TrigpointingUK</a>.',
                 projection: projection27700,
@@ -1314,7 +1314,7 @@ const map = new Map({
             new VectorLayer({
               updateWhileInteracting: true,
               updateWhileAnimating: true,
-              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 30 / resolution),
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(255, 100, 82, 1)', 100 / resolution),
               source: new VectorSource({
                 attributions: 'Trigpoints NI:&nbsp;compiled by Ross McDonald.',
                 projection: projection27700,
