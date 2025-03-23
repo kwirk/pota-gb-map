@@ -43,11 +43,11 @@ jobs:
           curl -OJL https://wwbota.org/wwbota-3
           md5sum wwbota-3
           python ukbota2geojson wwbota-3 > data/BOTA.json
-      #- name: Generate WCA GeoJSON
-      #  run: |
-      #    curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
-      #    md5sum WCALIST.ods
-      #    python wca2geojson WCALIST.ods > data/WCA.json
+      - name: Generate WCA GeoJSON
+        run: |
+          curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
+          md5sum WCALIST.ods
+          python wca2geojson WCALIST.ods > data/WCA.json
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
