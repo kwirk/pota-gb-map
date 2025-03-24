@@ -58,7 +58,7 @@ jobs:
       - name: Build
         env:
           VITE_OS_APIKEY: ${{ secrets.OS_APIKEY }}
-          VITE_AZURE_APIKEY: ${{ secrets.AZURE_APIKEY }}
+          VITE_BING_APIKEY: ${{ secrets.BING_APIKEY }}
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v5
