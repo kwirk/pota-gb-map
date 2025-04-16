@@ -457,7 +457,7 @@ const colorLNR = 'rgba(110, 140, 0, 1)';
 function polygonStyleFunctionLNR(feature, resolution) {
   let text = feature.get('NAME');
   if (text === undefined) {
-    text = feature.get('lnr_Name');
+    text = feature.get('lnr_name');
   }
   if (text === undefined) {
     text = feature.get('LNR_NAME');
