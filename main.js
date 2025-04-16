@@ -538,7 +538,10 @@ function polygonStyleFunctionNP(feature, resolution) {
 
 const colorFP = 'rgba(109, 179, 63, 1)';
 function polygonStyleFunctionFP(feature, resolution) {
-  const text = feature.get('FOREST_PAR');
+  let text = feature.get('FOREST_PAR');
+  if (text === undefined) {
+    text = feature.get('ASSET_NAME');
+  }
   return polygonStyleFunction(feature, resolution, text, colorFP);
 }
 
@@ -1165,12 +1168,17 @@ const map = new Map({
           ],
         }),
         new LayerGroup({
-          title: `${legendBox(colorFP)} Forest Parks`,
+          title: `${legendBox(colorFP)} Forest Parks / Recreation Areas`,
           shortTitle: 'FP',
           combine: true,
           visible: false,
           minZoom: 6,
           layers: [
+            vectorLayerWales(
+              polygonStyleFunctionFP,
+              'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_GB_RECREATION_AREAS&',
+              'FP',
+            ),
             new VectorLayer({
               minZoom: 6,
               style: polygonStyleFunctionFP,
