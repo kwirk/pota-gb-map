@@ -63,6 +63,7 @@ import NI_SPA from './data/NI_SPA.json?url';
 import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import WCA from './data/WCA.json?url';
+import WWFF from './data/WWFF.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 
@@ -1583,50 +1584,9 @@ const map = new Map({
           visible: false,
           source: new VectorSource({
             attributions: 'WWFF&nbsp;references:&nbsp;<a href="https://wwff.co/" target="_blank">WWFF</a>;&nbsp;<a href="https://wwff.co/" target="_blank">GxFF</a>;&nbsp;<a href="https://www.cqgma.org/" target="_blank">GMA</a>.',
-            strategy: countryStrategy,
-            loader: function loader(extent, resolution, projection, success, failure) {
-              const vectorSource = this;
-              const code = extentToCode(extent);
-              if (!code) {
-                failure(); // shouldn't ever get here
-                return;
-              }
-              const url = `https://www.cqgma.org/mvs/aaawff.php?r=${code}`;
-              const xhr = new XMLHttpRequest();
-              xhr.open('GET', url);
-              function onError() {
-                vectorSource.removeLoadedExtent(extent);
-                failure();
-              }
-              xhr.onerror = onError;
-              xhr.onload = () => {
-                const features = [];
-                if (xhr.status === 200) {
-                  xhr.responseText.split('|').forEach((item) => {
-                    const subitems = item.split('*');
-                    if (subitems[2] && subitems[1]) {
-                      const feature = new Feature({
-                        geometry: new Point(
-                          fromLonLat(
-                            [subitems[2], subitems[1]],
-                            projection27700,
-                          ),
-                        ),
-                        reference: subitems[0],
-                        name: subitems[3],
-                      });
-                      feature.setId(subitems[0]);
-                      features.push(feature);
-                    }
-                  });
-                  vectorSource.addFeatures(features);
-                  success(features);
-                } else {
-                  onError();
-                }
-              };
-              xhr.send();
-            },
+            projection: projection27700,
+            format: GeoJSON27700,
+            url: WWFF,
           }),
         }),
         new VectorLayer({

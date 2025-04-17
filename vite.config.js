@@ -30,13 +30,6 @@ export default {
             },
           },
           {
-            urlPattern: /^https:\/\/www.cqgma.org\/mvs\/aaawff\.php/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'wwff',
-            },
-          },
-          {
             urlPattern: /^https:\/\/api-db2.sota.org.uk\/api\//i,
             handler: 'StaleWhileRevalidate',
             options: {

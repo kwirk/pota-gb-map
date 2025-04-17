@@ -43,6 +43,11 @@ jobs:
           curl -OJL https://wwbota.org/wwbota-3
           md5sum wwbota-3
           python ukbota2geojson wwbota-3 > data/BOTA.json
+      - name: Generate WWFF GeoJSON
+        run: |
+          curl -OJL "https://wwff.co/wwff-data/wwff_directory.csv"
+          md5sum wwff_directory.csv
+          python wwff2geojson wwff_directory.csv > data/WWFF.json
       - name: Generate WCA GeoJSON
         run: |
           curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
