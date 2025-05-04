@@ -66,6 +66,7 @@ import WCA from './data/WCA.json?url';
 import WWFF from './data/WWFF.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
+import MOTA from './data/MOTA.json?url';
 
 const mapOptions = {
   textSize: parseFloat(localStorage.getItem('textSize')) || 1.0,
@@ -1337,6 +1338,85 @@ const map = new Map({
                 projection: projection27700,
                 format: GeoJSON27700,
                 url: OSNI_TRIGPOINTS,
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(249, 157, 68, 0.5)')} Mills on the Air`,
+          shortTitle: 'MOTA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              refUrl: 'https://www.cqgma.org/zinfo.php?ref=',
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(249, 157, 68, 1)', 1000 / resolution),
+              source: new VectorSource({
+                attributions: 'MOTA&nbsp;references:<a href="https://www.cqgma.org/mota/" target="_blank">©&nbsp;GMA&nbsp;MOTA</a>.',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    MOTA,
+                    (features) => {
+                      vectorSource.addFeatures(features);
+                      success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              refUrl: 'https://www.cqgma.org/zinfo.php?ref=',
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(249, 157, 68, 1)', true),
+              source: new VectorSource({
+                attributions: 'MOTA&nbsp;references:<a href="https://www.cqgma.org/mota/" target="_blank">©&nbsp;GMA&nbsp;MOTA</a>.',
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    MOTA,
+                    (features) => {
+                      const newFeatures = [];
+                      const expandedExtent = buffer(extent, 1000); // To capture centre point
+                      features.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
+                            const x = centerXY[0] + Math.cos(-angle) * 1000;
+                            const y = centerXY[1] + Math.sin(-angle) * 1000;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId()); // ID reset on clone
+                          newFeatures.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
               }),
             }),
           ],

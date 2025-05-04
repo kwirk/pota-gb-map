@@ -4,5 +4,6 @@ dist
 
 # Data sources
 data/BOTA.json
+data/MOTA.json
 data/WCA.json
 data/WWFF.json

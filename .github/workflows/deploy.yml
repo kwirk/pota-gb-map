@@ -53,6 +53,11 @@ jobs:
           curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
           md5sum WCALIST.ods
           python wca2geojson WCALIST.ods > data/WCA.json
+      - name: Generate MOTA GeoJSON
+        run: |
+          curl -OJL https://www.cqgma.org/gma_mills.csv
+          md5sum gma_mills.csv
+          python wca2geojson gma_mills.csv > data/MOTA.json
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

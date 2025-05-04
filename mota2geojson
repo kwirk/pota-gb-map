@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+"""
+Simple script to convert UK BOTA to GeoJson EPSG:27700
+"""
+import csv
+import json
+import sys
+
+from pyproj import Transformer
+
+if __name__ == "__main__":
+
+    transformer = Transformer.from_crs(4326, 27700)
+
+    features = []
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features
+    }
+    with open(sys.argv[1], encoding='latin1') as input_file:
+        next(input_file)
+        reader = csv.DictReader(input_file)
+
+        for n, row in enumerate(reader):
+            try:
+                if not row['Prefix'].startswith('G') or row['valid_to'] != "21991231":
+                    continue
+                point = transformer.transform(
+                    float(row['Latitude']), float(row['Longitude']))
+                features.append({
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [round(p) for p in point],
+                    },
+                    "properties": {
+                        "reference": row["Reference"],
+                        "name": row["Name"],
+                    }
+                })
+            except Exception as err:
+                print(n, err, row, file=sys.stderr)
+    json.dump(geojson, sys.stdout, separators=(',', ':'))
