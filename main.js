@@ -9,7 +9,6 @@ import LayerGroup from 'ol/layer/Group';
 import ImageLayer from 'ol/layer/Image';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
-import BingMaps from 'ol/source/BingMaps';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
 import RasterSource from 'ol/source/Raster';
@@ -18,7 +17,7 @@ import TileGrid from 'ol/tilegrid/TileGrid';
 import {bbox as bboxStrategy} from 'ol/loadingstrategy';
 import proj4 from 'proj4';
 import {register} from 'ol/proj/proj4';
-import {Projection, fromLonLat, transformExtent} from 'ol/proj';
+import {Projection, fromLonLat, toLonLat, transformExtent} from 'ol/proj';
 import {
   buffer,
   containsCoordinate,
@@ -824,26 +823,6 @@ class RepeaterVectorSource extends VectorSource {
   }
 }
 
-const bingGroup = new LayerGroup({
-  title: 'Bing Imagery',
-  shortTitle: 'BING',
-  type: 'base',
-  combine: true,
-  visible: false,
-  layers: [],
-});
-
-bingGroup.once('change:visible', () => {
-  // Callback to only set layer when used
-  // to avoid using API credits unnecessarily
-  bingGroup.getLayers().push(new TileLayer({
-    source: new BingMaps({
-      key: import.meta.env.VITE_BING_APIKEY,
-      imagerySet: 'Aerial',
-    }),
-  }));
-});
-
 // Used for layers switching between Circle and Polygon styles
 const dataCache = {};
 function withData(url, func, error) {
@@ -956,7 +935,6 @@ const map = new Map({
             url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
-        bingGroup,
       ],
     }),
     new LayerGroup({
@@ -1776,7 +1754,8 @@ function layersLinkCallback(newValue) {
       if (shortTitle) {
         if (layers.includes(shortTitle)
             || (layers.includes('REP2M') && shortTitle.startsWith('REP2M'))
-            || (layers.includes('REP70CM') && shortTitle.startsWith('REP70CM'))) {
+            || (layers.includes('REP70CM') && shortTitle.startsWith('REP70CM'))
+            || (layers.includes('BING') && shortTitle === "OSMG")) {
           layer.setVisible(true);
         } else {
           layer.setVisible(false);
@@ -1863,6 +1842,14 @@ map.on('singleclick', (event) => {
       hitTolerance: 2,
     },
   );
+  const mapsLink = document.createElement('a');
+  const [lon, lat] = toLonLat(event.coordinate, projection27700)
+  mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`;
+  mapsLink.textContent = `Google Maps`;
+  mapsLink.target = '_blank';
+  const listItem = document.createElement('li');
+  listItem.appendChild(mapsLink);
+  content.appendChild(listItem);
   if (content.hasChildNodes()) { popup.show(event.coordinate, content); }
 });
 
