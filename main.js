@@ -1768,7 +1768,7 @@ function layersLinkCallback(newValue) {
         if (layers.includes(shortTitle)
             || (layers.includes('REP2M') && shortTitle.startsWith('REP2M'))
             || (layers.includes('REP70CM') && shortTitle.startsWith('REP70CM'))
-            || (layers.includes('ESRIWI') && shortTitle === "OSMG")) {
+            || (layers.includes('BING') && shortTitle === "ESRIWI")) {
           layer.setVisible(true);
         } else {
           layer.setVisible(false);
