@@ -823,27 +823,6 @@ class RepeaterVectorSource extends VectorSource {
   }
 }
 
-const esriWorldImageryGroup = new LayerGroup({
-  title: 'ESRI World Imagery',
-  shortTitle: 'ESRIWI',
-  type: 'base',
-  combine: true,
-  visible: false,
-  layers: [],
-});
-
-esriWorldImageryGroup.once('change:visible', () => {
-  esriWorldImageryGroup.getLayers().push(new TileLayer({
-    source: new ol.source.XYZ({
-      attributions: ['Powered by Esri',
-        'Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'],
-      attributionsCollapsible: false,
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      maxZoom: 23
-    })
-  }));
-});
-
 // Used for layers switching between Circle and Polygon styles
 const dataCache = {};
 function withData(url, func, error) {
@@ -956,7 +935,19 @@ const map = new Map({
             url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
-        esriWorldImageryGroup
+        new TileLayer({
+          title: 'ESRI World Imagery',
+          shortTitle: 'ESRIWI',
+          type: 'base',
+          visible: false,
+          source: new XYZ({
+            attributions: ['Powered by Esri',
+              'Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'],
+            attributionsCollapsible: false,
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            maxZoom: 23
+          })
+        })
       ],
     }),
     new LayerGroup({
