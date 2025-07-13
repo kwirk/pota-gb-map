@@ -33,7 +33,7 @@ and [RSPB](https://www.rspb.org.uk/) for providing GIS services to access their 
 Also [Northern Ireland Environment Agency](https://www.daera-ni.gov.uk/northern-ireland-environment-agency) for providing data
 for providing similar data via files.
 
-Thanks to [Ordnance Survey](https://www.ordnancesurvey.co.uk/), [OpenStreetMap](https://www.openstreetmap.org/about), [OpenTopoMap](https://opentopomap.org/about), and [Bing Maps](https://www.bing.com/maps) for providing base mapping services.
+Thanks to [Ordnance Survey](https://www.ordnancesurvey.co.uk/), [OpenStreetMap](https://www.openstreetmap.org/about), [OpenTopoMap](https://opentopomap.org/about), and [ESRI](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) for providing base mapping services.
 
 Thanks to POTA and SOTA programmes for providing APIs to directly access programme references.
 

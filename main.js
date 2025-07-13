@@ -823,6 +823,27 @@ class RepeaterVectorSource extends VectorSource {
   }
 }
 
+const esriWorldImageryGroup = new LayerGroup({
+  title: 'ESRI World Imagery',
+  shortTitle: 'ESRIWI',
+  type: 'base',
+  combine: true,
+  visible: false,
+  layers: [],
+});
+
+esriWorldImageryGroup.once('change:visible', () => {
+  esriWorldImageryGroup.getLayers().push(new TileLayer({
+    source: new ol.source.XYZ({
+      attributions: ['Powered by Esri',
+        'Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'],
+      attributionsCollapsible: false,
+      url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      maxZoom: 23
+    })
+  }));
+});
+
 // Used for layers switching between Circle and Polygon styles
 const dataCache = {};
 function withData(url, func, error) {
@@ -935,6 +956,7 @@ const map = new Map({
             url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png',
           }),
         }),
+        esriWorldImageryGroup
       ],
     }),
     new LayerGroup({
@@ -1755,7 +1777,7 @@ function layersLinkCallback(newValue) {
         if (layers.includes(shortTitle)
             || (layers.includes('REP2M') && shortTitle.startsWith('REP2M'))
             || (layers.includes('REP70CM') && shortTitle.startsWith('REP70CM'))
-            || (layers.includes('BING') && shortTitle === "OSMG")) {
+            || (layers.includes('ESRIWI') && shortTitle === "OSMG")) {
           layer.setVisible(true);
         } else {
           layer.setVisible(false);
