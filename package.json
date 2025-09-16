@@ -12,7 +12,7 @@
     "vite-plugin-pwa": "^1.0.3"
   },
   "dependencies": {
-    "lru-cache": "^11.1.0",
+    "lru-cache": "^11.2.1",
     "ol": "^10.6.1",
     "ol-layerswitcher": "^4.1.2",
     "ol-mapbox-style": "^13.1.0",
