@@ -67,6 +67,8 @@ import TRIGPOINTS from './data/trigpoints.json?url';
 import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 import MOTA from './data/MOTA.json?url';
 
+import NATIONAL_FOREST from './data/national_forest.json?url';
+
 const mapOptions = {
   textSize: parseFloat(localStorage.getItem('textSize')) || 1.0,
   activeLayers: new Collection(localStorage.getItem('activeLayers')?.split(' ') || []),
@@ -1185,6 +1187,17 @@ const map = new Map({
                   + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
                   + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
                   + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,FOREST_PAR&outSR=27700',
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionFP,
+              extent: [412255, 304343, 455122, 328306],
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;©&nbsp;The&nbsp;National&nbsp;Forest&nbsp;Company.',
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: NATIONAL_FOREST,
               }),
             }),
           ],
