@@ -55,10 +55,12 @@ jobs:
           python mota2geojson gma_mills.csv > data/MOTA.json
       - name: Restore cached WCALIST.ods
         id: cache-wca
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: WCALIST.ods
-          key: wca-cache-v1
+          key: wca-cache-v2
+          restore-keys: |
+            wca-cache-v2-
       - name: Download WCALIST.ods (attempt)
         id: download-wca
         run: |
@@ -67,22 +69,21 @@ jobs:
         continue-on-error: true
       - name: Use cached WCALIST.ods if download failed
         run: |
-          if [ "${{ steps.download-wca.outcome }}" != "success" ]; then
-            if [ "${{ steps.cache-wca.cache-hit }}" == "true" ]; then
-              echo "Download failed, using cached WCALIST.ods"
-            else
-              echo "Download failed and no cache available"
-              exit 1
-            fi
+          if [ "${{ steps.download-wca.outcome }}" == "success" ]; then
+            echo "Download succeeded. New file will be used and cached."
+          elif [ -f "WCALIST.ods" ]; then
+            # The file exists because the 'restore' step successfully restored a partial match.
+            echo "Download failed, but using cached WCALIST.ods restored from key: ${{ steps.cache-wca.outputs.cache-matched-key }}"
           else
-            echo "Download succeeded"
+            echo "Download failed and no cache was found. Cannot proceed."
+            exit 1 # Fail the job if neither a fresh download nor a cache is available
           fi
       - name: Save WCALIST.ods to cache
         if: steps.download-wca.outcome == 'success'
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
           path: WCALIST.ods
-          key: wca-cache-v1
+          key: wca-cache-v2-${{ hashFiles('WCALIST.ods') }}
       - name: Generate WCA GeoJSON
         run: |
           md5sum WCALIST.ods
