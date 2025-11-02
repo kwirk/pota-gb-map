@@ -48,16 +48,45 @@ jobs:
           curl -OJL "https://wwff.co/wwff-data/wwff_directory.csv"
           md5sum wwff_directory.csv
           python wwff2geojson wwff_directory.csv > data/WWFF.json
-      - name: Generate WCA GeoJSON
-        run: |
-          curl -OJL https://wcagroup.org/FORMS/WCALIST.ods
-          md5sum WCALIST.ods
-          python wca2geojson WCALIST.ods > data/WCA.json
       - name: Generate MOTA GeoJSON
         run: |
           curl -OJL https://www.cqgma.org/gma_mills.csv
           md5sum gma_mills.csv
           python mota2geojson gma_mills.csv > data/MOTA.json
+      - name: Restore cached WCALIST.ods
+        id: cache-wca
+        uses: actions/cache@v4
+        with:
+          path: WCALIST.ods
+          key: wca-cache-v1
+      - name: Download WCALIST.ods (attempt)
+        id: download-wca
+        run: |
+          echo "Attempting to download WCALIST.ods..."
+          curl -f -OJL https://wcagroup.org/FORMS/WCALIST.ods
+        continue-on-error: true
+      - name: Use cached WCALIST.ods if download failed
+        run: |
+          if [ "${{ steps.download-wca.outcome }}" != "success" ]; then
+            if [ "${{ steps.cache-wca.cache-hit }}" == "true" ]; then
+              echo "Download failed, using cached WCALIST.ods"
+            else
+              echo "Download failed and no cache available"
+              exit 1
+            fi
+          else
+            echo "Download succeeded"
+          fi
+      - name: Save WCALIST.ods to cache
+        if: steps.download-wca.outcome == 'success'
+        uses: actions/cache@v4
+        with:
+          path: WCALIST.ods
+          key: wca-cache-v1
+      - name: Generate WCA GeoJSON
+        run: |
+          md5sum WCALIST.ods
+          python wca2geojson WCALIST.ods > data/WCA.json
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
