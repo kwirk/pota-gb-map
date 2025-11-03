@@ -1301,7 +1301,7 @@ const map = new Map({
                 projection: projection27700,
                 strategy: cacheGridStrategy,
                 loader: cachedFeaturesLoader('RSPB'),
-                url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/12/query/?'
+                url: (extent) => 'https://services1.arcgis.com/h1C9f6qsGKmqXsVs/ArcGIS/rest/services/RSPB_Public_Reserves/FeatureServer/0/query/?'
                   + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
                   + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
                   + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700&where=Access%3D\'Publicised\'',
