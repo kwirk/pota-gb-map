@@ -29,8 +29,9 @@ Thanks to [Natural England](https://www.gov.uk/government/organisations/natural-
 [NatureScot](https://www.nature.scot/),
 [Natural Resources Wales](https://naturalresources.wales/),
 [Forestry Commission](https://www.gov.uk/government/organisations/forestry-commission),
+[National Trust](https://www.nationaltrust.org.uk/),
 and [RSPB](https://www.rspb.org.uk/) for providing GIS services to access their data.
-Also [Northern Ireland Environment Agency](https://www.daera-ni.gov.uk/northern-ireland-environment-agency) for providing data
+Also [Northern Ireland Environment Agency](https://www.daera-ni.gov.uk/northern-ireland-environment-agency)
 for providing similar data via files.
 
 Thanks to [Ordnance Survey](https://www.ordnancesurvey.co.uk/), [OpenStreetMap](https://www.openstreetmap.org/about), [OpenTopoMap](https://opentopomap.org/about), and [ESRI](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) for providing base mapping services.

@@ -402,8 +402,28 @@ function triangleStyleFunction(feature, resolution, color) {
   });
 }
 
-function legendBox(color, border = true) {
-  return `<div class="box" style="background-color: ${colorOpacity(color, border ? 0.2 : 0.5)}; border-color: ${border ? color : colorOpacity(color, 0)}"></div>`;
+function legendBox(color, border = true, pattern = false) {
+  const backgroundColor = border ? 'white' : 'transparent';
+  const borderColor = border ? color : colorOpacity(color, 0);
+
+  let backgroundStyle = '';
+  if (pattern) {
+    const gradient = `repeating-linear-gradient(
+      135deg,
+      ${color},
+      ${color} 2px,
+      ${backgroundColor} 2px,
+      ${backgroundColor} 10px
+    )`;
+    backgroundStyle = `background-color: ${backgroundColor}; background-image: ${gradient};`;
+  } else {
+    const solidFillColor = colorOpacity(color, border ? 0.2 : 0.5);
+    backgroundStyle = `background-color: ${solidFillColor};`;
+  }
+  return `<div
+            class="box"
+            style="${backgroundStyle} border-color: ${borderColor}">
+          </div>`;
 }
 
 function legendDot(color) {
@@ -419,14 +439,14 @@ function legendLine(color) {
   return `<div class="line" style="background-color: ${color}"></div>`;
 }
 
-function polygonStyleFunction(feature, resolution, text, color, bStroke = false, stroke = true) {
+function polygonStyleFunction(feature, resolution, text, color, bStroke = false, stroke = true, colorOverride = null) {
   return new Style({
     stroke: stroke ? new Stroke({
       color: bStroke ? '#000000' : color,
       width: bStroke ? 1 : 3,
     }) : undefined,
     fill: new Fill({
-      color: colorOpacity(color, stroke ? 0.2 : 0.5),
+      color: colorOverride ?? colorOpacity(color, stroke ? 0.2 : 0.5),
     }),
     text: text ? createTextStyle(feature, resolution, text, color, 0) : undefined,
   });
@@ -573,6 +593,30 @@ function lineStyleFunction(feature, resolution, text, color, overflow = true) {
       offsetY: 15,
     }),
   });
+}
+
+const colorNATR = 'rgba(4, 126, 196, 1)';
+const patternCanvas = document.createElement('canvas');
+const size = 16;
+patternCanvas.width = size;
+patternCanvas.height = size;
+const context = patternCanvas.getContext('2d');
+
+context.strokeStyle = colorOpacity(colorNATR, 0.5);
+context.lineWidth = 2;
+context.beginPath();
+context.moveTo(0, size);
+context.lineTo(size, 0);
+context.stroke();
+const diagonalPattern = context.createPattern(patternCanvas, 'repeat');
+
+function polygonStyleFunctionNATR(feature, resolution) {
+  const text = feature.get('Name');
+  return polygonStyleFunction(feature, resolution, text, colorNATR);
+}
+function polygonStyleFunctionNATRL(feature, resolution) {
+  const text = feature.get('Name');
+  return polygonStyleFunction(feature, resolution, text, colorNATR, false, true, diagonalPattern);
 }
 
 const colorNT = 'rgba(115, 0, 0, 1)';
@@ -1140,6 +1184,45 @@ const map = new Map({
             vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&', 'NT'),
             vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&', 'NTCP'),
             vectorLayerScotland((f, r) => lineStyleFunctionNT(f, r, 'John Muir Way'), 'https://ogc.nature.scot/geoserver/landscape/wfs?service=wfs&typeName=landscape:jmw&', 'NTJMW'),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendBox(colorNATR)} National Trust (Always Open)<br>${legendBox(colorNATR, true, true)} National Trust (Limited Access)`,
+          shortTitle: 'NATR',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionNATR,
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;©&nbsp;National&nbsp;Trust&nbsp;(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC-BY-4.0</a>).',
+                format: new EsriJSON(),
+                projection: projection27700,
+                loader: cachedFeaturesLoader('NATR'),
+                strategy: cacheGridStrategy,
+                url: (extent) => 'https://services-eu1.arcgis.com/NPIbx47lsIiu2pqz/arcgis/rest/services/National_Trust_Open_Data_Land_Always_Open/FeatureServer/0/query?'
+                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
+                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700',
+              }),
+            }),
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionNATRL,
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;©&nbsp;National&nbsp;Trust&nbsp;(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC-BY-4.0</a>).',
+                format: new EsriJSON(),
+                projection: projection27700,
+                loader: cachedFeaturesLoader('NATRL'),
+                strategy: cacheGridStrategy,
+                url: (extent) => 'https://services-eu1.arcgis.com/NPIbx47lsIiu2pqz/arcgis/rest/services/National_Trust_Open_Data_Land_Limited_Access/FeatureServer/0/query?'
+                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
+                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
+                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,Name&outSR=27700',
+              }),
+            }),
           ],
         }),
         createLayerGroup( // Previously Areas of Outstanding Natural Beauty
