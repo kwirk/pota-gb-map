@@ -40,9 +40,9 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Generate UKBOTA GeoJSON
         run: |
-          curl -OJL https://wwbota.org/wwbota-3
-          md5sum wwbota-3
-          python ukbota2geojson wwbota-3 > data/BOTA.json
+          curl -OJL "https://api.wwbota.org/bunkers/?scheme=UKBOTA&format=CSV"
+          md5sum bunkers.csv
+          python ukbota2geojson bunkers.csv > data/BOTA.json
       - name: Generate WWFF GeoJSON
         run: |
           curl -OJL "https://wwff.co/wwff-data/wwff_directory.csv"
