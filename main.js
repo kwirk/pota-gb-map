@@ -59,7 +59,6 @@ import NI_ASSI from './data/NI_ASSI.json?url';
 import NI_NNR from './data/NI_NNR.json?url';
 import NI_SAC from './data/NI_SAC.json?url';
 import NI_SPA from './data/NI_SPA.json?url';
-import BOTA from './data/BOTA.json?url';
 import HEMA from './data/HEMA.json?url';
 import WCA from './data/WCA.json?url';
 import WWFF from './data/WWFF.json?url';
@@ -766,6 +765,22 @@ function countryStrategy(extent) {
       }
     },
   );
+  return extents;
+}
+
+function otaGridStrategy(extent) {
+  const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+  const [x0, y0, xN, yN] = [
+    Math.floor(newExtent[0]),
+    Math.floor(newExtent[1] * 2) / 2,
+    Math.ceil(newExtent[2]),
+    Math.ceil(newExtent[3] * 2) / 2];
+  const extents = [];
+  for (let x = x0; x < xN; x += 1) {
+    for (let y = y0; y < yN; y += 0.5) {
+      extents.push(transformExtent([x, y, x + 1, y + 0.5], 'EPSG:4326', projection27700));
+    }
+  }
   return extents;
 }
 
@@ -1600,19 +1615,16 @@ const map = new Map({
               style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(122, 174, 0, 1)', 1000 / resolution),
               source: new VectorSource({
                 attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>.',
-                loader: function loader(extent, resolution, projection, success, failure) {
-                  const vectorSource = this;
-                  withData(
-                    BOTA,
-                    (BOTAfeatures) => {
-                      vectorSource.addFeatures(BOTAfeatures);
-                      success(BOTAfeatures);
-                    },
-                    () => {
-                      vectorSource.removeLoadedExtent(extent);
-                      failure();
-                    },
-                  );
+                format: new GeoJSONReference({featureProjection: projection27700}),
+                strategy: otaGridStrategy,
+                url: (extent) => {
+                  const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+                  const [minLon, minLat, maxLon, maxLat] = [
+                    Math.round(newExtent[0]),
+                    Math.round(newExtent[1] * 2) / 2,
+                    Math.round(newExtent[2]),
+                    Math.round(newExtent[3] * 2) / 2];
+                  return `https://api.wwbota.org/bunkers/?format=GEOJSON&bbox=${minLon},${minLat},${maxLon},${maxLat}`;
                 },
               }),
             }),
@@ -1624,18 +1636,32 @@ const map = new Map({
               style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(122, 174, 0, 1)', true),
               source: new VectorSource({
                 attributions: 'UKBOTA&nbsp;references:<a href="https://bunkersontheair.org/" target="_blank">©&nbsp;Bunkers&nbsp;on&nbsp;the&nbsp;Air</a>.',
-                strategy: bboxStrategy,
+                format: new GeoJSONReference({featureProjection: projection27700}),
+                strategy: otaGridStrategy,
                 loader: function loader(extent, resolution, projection, success, failure) {
                   const vectorSource = this;
-                  withData(
-                    BOTA,
-                    (features) => {
+                  const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
+                  const [minLon, minLat, maxLon, maxLat] = [
+                    Math.round(newExtent[0]),
+                    Math.round(newExtent[1] * 2) / 2,
+                    Math.round(newExtent[2]),
+                    Math.round(newExtent[3] * 2) / 2];
+                  const url = `https://api.wwbota.org/bunkers/?format=GEOJSON&bbox=${minLon},${minLat},${maxLon},${maxLat}`;
+                  const xhr = new XMLHttpRequest();
+                  xhr.open('GET', url);
+                  xhr.responseType = 'json';
+                  function onError() {
+                    vectorSource.removeLoadedExtent(extent);
+                    failure();
+                  }
+                  xhr.onerror = onError;
+                  xhr.onload = () => {
+                    if (xhr.status === 200) {
                       const newFeatures = [];
-                      const expandedExtent = buffer(extent, 1000); // To capture centre point
+                      const features = vectorSource.getFormat().readFeatures(xhr.response);
                       features.forEach((feature) => {
                         const geometry = feature.getGeometry();
-                        if (vectorSource.getFeatureById(feature.getId()) === null
-                            && geometry.intersectsExtent(expandedExtent)) {
+                        if (vectorSource.getFeatureById(feature.getId()) === null) {
                           const coordinates = [];
                           const nSteps = 128;
                           const centerXY = geometry.getCoordinates();
@@ -1645,20 +1671,15 @@ const map = new Map({
                             const y = centerXY[1] + Math.sin(-angle) * 1000;
                             coordinates.push([x, y]);
                           }
-                          const newFeature = feature.clone();
-                          newFeature.setGeometry(new Polygon([coordinates]));
-                          newFeature.setId(feature.getId()); // ID reset on clone
-                          newFeatures.push(newFeature);
+                          feature.setGeometry(new Polygon([coordinates]));
+                          newFeatures.push(feature);
                         }
                       });
                       vectorSource.addFeatures(newFeatures);
                       success(newFeatures);
-                    },
-                    () => {
-                      vectorSource.removeLoadedExtent(extent);
-                      failure();
-                    },
-                  );
+                    };
+                  };
+                  xhr.send();
                 },
               }),
             }),
@@ -1766,21 +1787,7 @@ const map = new Map({
             attributions: 'POTA&nbsp;references:&nbsp;<a href="https://parksontheair.com/" target="_blank">Parks&nbsp;on&nbsp;the&nbsp;Air®.</a>',
             projection: projection27700,
             format: new GeoJSONReference({featureProjection: projection27700}),
-            strategy: (extent) => {
-              const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
-              const [x0, y0, xN, yN] = [
-                Math.floor(newExtent[0]),
-                Math.floor(newExtent[1] * 2) / 2,
-                Math.ceil(newExtent[2]),
-                Math.ceil(newExtent[3] * 2) / 2];
-              const extents = [];
-              for (let x = x0; x < xN; x += 1) {
-                for (let y = y0; y < yN; y += 0.5) {
-                  extents.push(transformExtent([x, y, x + 1, y + 0.5], 'EPSG:4326', projection27700));
-                }
-              }
-              return extents;
-            },
+            strategy: otaGridStrategy,
             url: (extent) => {
               const newExtent = transformExtent(extent, projection27700, 'EPSG:4326');
               const [minLon, minLat, maxLon, maxLat] = [

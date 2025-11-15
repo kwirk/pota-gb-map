@@ -37,6 +37,13 @@ export default {
             },
           },
           {
+            urlPattern: /^https:\/\/api.wwbota.org\/bunkers\//i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'wwbota',
+            },
+          },
+          {
             urlPattern: /^https:\/\/api-beta.rsgb.online\/locator\//i,
             handler: 'StaleWhileRevalidate',
             options: {
