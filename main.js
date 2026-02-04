@@ -65,6 +65,7 @@ import WWFF from './data/WWFF.json?url';
 import TRIGPOINTS from './data/trigpoints.json?url';
 import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 import MOTA from './data/MOTA.json?url';
+import WOTA from './data/WOTA.json?url';
 
 import NATIONAL_FOREST from './data/national_forest.json?url';
 
@@ -261,6 +262,19 @@ class GeoJSONReference extends GeoJSON {
   readFeatureFromObject(object, options) {
     const feature = super.readFeatureFromObject(object, options);
     feature.setId(feature.get('reference'));
+    return feature;
+  }
+}
+
+class GeoJSONWOTA extends GeoJSON {
+  readFeatureFromObject(object, options) {
+    const feature = super.readFeatureFromObject(object, options);
+    feature.setId(feature.get('wotaId'));
+    feature.set('reference', feature.get('wotaId'));
+    feature.set('name', feature.get('title'));
+    const [refPrefix, refNum] = feature.get('wotaId').split('-');
+    const refFix = `${refPrefix}-${refPrefix === 'LDO' ? parseInt(refNum) + 214 : refNum}`;
+    feature.set('refUrl', `${refFix}`);
     return feature;
   }
 }
@@ -1684,6 +1698,20 @@ const map = new Map({
               }),
             }),
           ],
+        }),
+        new VectorLayer({
+          title: `${legendDot('rgb(59, 240, 186)')} Wainwrights on the Air`,
+          shortTitle: 'WAIN',
+          refUrl: 'https://www.wota.org.uk/mm_',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(59, 240, 186, 1)'),
+          extent: extentEngland,
+          source: new VectorSource({
+            attributions: 'WOTA&nbsp;references:<a href="https://www.wota.org.uk/" target="_blank">©&nbsp;WOTA</a>',
+            format: new GeoJSONWOTA(),
+            url: WOTA,
+          }),
         }),
         new VectorLayer({
           title: `${legendDot('rgba(218, 70, 255, 1)')} HuMPs Excl. Marilyns Award`,
