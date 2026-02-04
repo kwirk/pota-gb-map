@@ -49,7 +49,7 @@ jobs:
           md5sum gma_mills.csv
           python mota2geojson gma_mills.csv > data/MOTA.json
       - name: Fetch WOTA GeoJSON
-          curl -JL -o data/WOTA.json ttps://www.wota.org.uk/mapping/data/summits.json
+        run: curl -JL -o data/WOTA.json https://www.wota.org.uk/mapping/data/summits.json
       - name: Restore cached WCALIST.ods
         id: cache-wca
         uses: actions/cache/restore@v5
