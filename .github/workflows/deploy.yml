@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -50,7 +50,7 @@ jobs:
           python mota2geojson gma_mills.csv > data/MOTA.json
       - name: Restore cached WCALIST.ods
         id: cache-wca
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: WCALIST.ods
           key: wca-cache-v2
@@ -75,7 +75,7 @@ jobs:
           fi
       - name: Save WCALIST.ods to cache
         if: steps.download-wca.outcome == 'success'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: WCALIST.ods
           key: wca-cache-v2-${{ hashFiles('WCALIST.ods') }}
