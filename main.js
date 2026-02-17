@@ -586,6 +586,15 @@ function polygonStyleFunctionCROW(feature, resolution) {
   return polygonStyleFunction(feature, resolution, null, colorCROW, false, false);
 }
 
+const colorLAKE = 'rgba(238, 0, 255, 1)';
+function polygonStyleFunctionLAKE(feature, resolution) {
+  let text = feature.get('NAME')
+  if (text === 'unnamed'){
+    text = ''
+  }
+  return polygonStyleFunction(feature, resolution, text, colorLAKE);
+}
+
 function lineStyleFunction(feature, resolution, text, color, overflow = true) {
   const width = Math.max(61 / resolution, 4); // ±100ft
   return new Style({
@@ -1213,6 +1222,27 @@ const map = new Map({
             vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&', 'NT'),
             vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&', 'NTCP'),
             vectorLayerScotland((f, r) => lineStyleFunctionNT(f, r, 'John Muir Way'), 'https://ogc.nature.scot/geoserver/landscape/wfs?service=wfs&typeName=landscape:jmw&', 'NTJMW'),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendBox(colorLAKE)} Lakes`,
+          shortTitle: 'LAKE',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              minZoom: 6,
+              style: polygonStyleFunctionLAKE,
+              source: new VectorSource({
+                attributions: 'Boundaries:&nbsp;©&nbsp;UK&nbsp;Centre&nbsp;for&nbsp;Ecology&nbsp;&amp;&nbsp;Hydrology&nbsp;(<a href="https://uklakes.ceh.ac.uk/about.html" target="_blank">Based on OGL</a>).',
+                format: GeoJSON27700,
+                projection: projection27700,
+                loader: cachedFeaturesLoader('LAKE'),
+                strategy: cacheGridStrategy,
+                url: (extent) => `https://uklakes.ceh.ac.uk/geoserver/UK_LAKES/ows?service=WFS&typeName=UK_LAKES%3Auklakes_poly_v3.6.1&version=2.0.0&request=GetFeature&outputFormat=application/json&srsname=EPSG:27700&bbox=${extent},EPSG:27700&propertyName=NAME,geom`,
+              }),
+            }),
           ],
         }),
         new LayerGroup({

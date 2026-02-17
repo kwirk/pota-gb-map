@@ -30,6 +30,7 @@ Thanks to [Natural England](https://www.gov.uk/government/organisations/natural-
 [Natural Resources Wales](https://naturalresources.wales/),
 [Forestry Commission](https://www.gov.uk/government/organisations/forestry-commission),
 [National Trust](https://www.nationaltrust.org.uk/),
+[UK Centre for Ecology & Hydrology](https://uklakes.ceh.ac.uk/),
 and [RSPB](https://www.rspb.org.uk/) for providing GIS services to access their data.
 Also [Northern Ireland Environment Agency](https://www.daera-ni.gov.uk/northern-ireland-environment-agency)
 for providing similar data via files.
