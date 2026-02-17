@@ -66,6 +66,7 @@ import TRIGPOINTS from './data/trigpoints.json?url';
 import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 import MOTA from './data/MOTA.json?url';
 import WOTA from './data/WOTA.json?url';
+import LLOTA from './data/LLOTA.json?url';
 
 import NATIONAL_FOREST from './data/national_forest.json?url';
 
@@ -1484,6 +1485,25 @@ const map = new Map({
                 projection: projection27700,
                 format: GeoJSON27700,
                 url: OSNI_TRIGPOINTS,
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(255, 132, 0, 0.5)')} Lakes and Lagoons on the Air`,
+          shortTitle: 'LLOTA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              refUrl: 'https://llota.app/list/ref/',
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(225, 132, 0, 1)'),
+              source: new VectorSource({
+                attributions: 'LLOTA&nbsp;references:&nbsp;<a href="https://llota.app/" target="_blank">LLOTA</a>.',
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: LLOTA,
               }),
             }),
           ],
