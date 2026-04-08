@@ -67,6 +67,7 @@ import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 import MOTA from './data/MOTA.json?url';
 import WOTA from './data/WOTA.json?url';
 import LLOTA from './data/LLOTA.json?url';
+import FIFE_COAST_PATH from './data/fife_coast_path.json?url';
 
 import NATIONAL_FOREST from './data/national_forest.json?url';
 
@@ -1223,6 +1224,15 @@ const map = new Map({
             vectorLayerWales(lineStyleFunctionNT, 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_NATIONAL_TRAIL&', 'NT'),
             vectorLayerWales((f, r) => lineStyleFunctionNT(f, r, 'Wales Coast Path'), 'https://datamap.gov.wales/geoserver/wfs?service=wfs&typeName=inspire-nrw:NRW_WALES_COASTAL_PATH&', 'NTCP'),
             vectorLayerScotland((f, r) => lineStyleFunctionNT(f, r, 'John Muir Way'), 'https://ogc.nature.scot/geoserver/landscape/wfs?service=wfs&typeName=landscape:jmw&', 'NTJMW'),
+            new VectorLayer({
+              minZoom: 6,
+              style: (f, r) => lineStyleFunctionNT(f, r, 'Fife Coast Path'),
+              source: new VectorSource({
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: FIFE_COAST_PATH,
+              }),
+            }),
           ],
         }),
         new LayerGroup({
