@@ -2,7 +2,6 @@
 """
 Simple script to convert UK BOTA to GeoJson EPSG:27700
 """
-import csv
 import json
 import sys
 
@@ -17,27 +16,24 @@ if __name__ == "__main__":
         "type": "FeatureCollection",
         "features": features
     }
-    with open(sys.argv[1], encoding='latin1') as input_file:
-        next(input_file)
-        reader = csv.DictReader(input_file)
-
-        for n, row in enumerate(reader):
-            try:
-                if not row['Prefix'].startswith('G') or row['valid_to'] != "21991231":
-                    continue
-                point = transformer.transform(
-                    float(row['Latitude']), float(row['Longitude']))
-                features.append({
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [round(p) for p in point],
-                    },
-                    "properties": {
-                        "reference": row["Reference"],
-                        "name": row["Name"],
-                    }
-                })
-            except Exception as err:
-                print(n, err, row, file=sys.stderr)
+    for input_filename in sys.argv[1:]:
+        with open(input_filename, encoding='utf-8') as input_file:
+            data = json.load(input_file)
+            for n, input_geojson in enumerate(data['features']):
+                try:
+                    point = transformer.transform(
+                        float(input_geojson['geometry']['coordinates'][1]), float(input_geojson['geometry']['coordinates'][0]))
+                    features.append({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [round(p) for p in point],
+                        },
+                        "properties": {
+                            "reference": input_geojson["properties"]["ref"],
+                            "name": input_geojson["properties"]["name"],
+                        }
+                    })
+                except Exception as err:
+                    print(n, err, input_geojson, file=sys.stderr)
     json.dump(geojson, sys.stdout, separators=(',', ':'))
