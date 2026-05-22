@@ -1682,7 +1682,7 @@ const map = new Map({
           minZoom: 6,
           layers: [
             new VectorLayer({
-              refUrl: 'https://bunkerwiki.org/?s=',
+              refUrl: 'https://ukbota.net/atlas/?bunker=',
               maxZoom: 11,
               updateWhileInteracting: true,
               updateWhileAnimating: true,
