@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
         for n, row in enumerate(data):
             try:
-                if not row['reference_code'].startswith('GB-'):
+                if not row['reference_code'].startswith('LLGB-'):
                     continue
                 point = transformer.transform(
                     float(row['latitude']), float(row['longitude']))
