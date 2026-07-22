@@ -54,6 +54,10 @@ jobs:
           python llota2geojson references > data/LLOTA.json
       - name: Fetch WOTA GeoJSON
         run: curl -JL -o data/WOTA.json https://www.wota.org.uk/mapping/data/summits.json
+      - name: Generate TOTA GeoJSON
+        run: |
+          curl -o TOTA.csv -L "https://wwtota.com/servis/generate_csv.php?ref=GBR&filter=all"
+          python tota2geojson TOTA.csv > data/TOTA.json
       - name: Restore cached WCALIST.ods
         id: cache-wca
         uses: actions/cache/restore@v6

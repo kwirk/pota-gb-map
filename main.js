@@ -67,6 +67,7 @@ import OSNI_TRIGPOINTS from './data/osni_trigpoints.json?url';
 import MOTA from './data/MOTA.json?url';
 import WOTA from './data/WOTA.json?url';
 import LLOTA from './data/LLOTA.json?url';
+import TOTA from './data/TOTA.json?url';
 import FIFE_COAST_PATH from './data/fife_coast_path.json?url';
 
 import NATIONAL_FOREST from './data/national_forest.json?url';
@@ -1495,6 +1496,85 @@ const map = new Map({
                 projection: projection27700,
                 format: GeoJSON27700,
                 url: OSNI_TRIGPOINTS,
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(42, 42, 42, 0.5)')} Towers on the Air`,
+          shortTitle: 'TOTA',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              refUrl: 'https://wwtota.com/seznam/karta_rozhledny.php?lang=en&ref=',
+              maxZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(42, 42, 42, 1)', 200 / resolution),
+              source: new VectorSource({
+                attributions: 'TOTA&nbsp;references:<a href="https://wwtota.com/" target="_blank">©&nbsp;TOTA</a>.',
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    TOTA,
+                    (features) => {
+                      vectorSource.addFeatures(features);
+                      success(features);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
+              }),
+            }),
+            new VectorLayer({
+              refUrl: 'https://wwtota.com/seznam/karta_rozhledny.php?lang=en&ref=',
+              minZoom: 11,
+              updateWhileInteracting: true,
+              updateWhileAnimating: true,
+              style: (feature, resolution) => polygonStyleFunction(feature, resolution, `${feature.get('reference')} ${feature.get('name')}`, 'rgba(42, 42, 42, 1)', true),
+              source: new VectorSource({
+                attributions: 'TOTA&nbsp;references:<a href="https://wwtota.com/" target="_blank">©&nbsp;TOTA</a>.',
+                strategy: bboxStrategy,
+                loader: function loader(extent, resolution, projection, success, failure) {
+                  const vectorSource = this;
+                  withData(
+                    TOTA,
+                    (features) => {
+                      const newFeatures = [];
+                      const expandedExtent = buffer(extent, 200); // To capture centre point
+                      features.forEach((feature) => {
+                        const geometry = feature.getGeometry();
+                        if (vectorSource.getFeatureById(feature.getId()) === null
+                            && geometry.intersectsExtent(expandedExtent)) {
+                          const coordinates = [];
+                          const nSteps = 128;
+                          const centerXY = geometry.getCoordinates();
+                          for (let i = 0; i < nSteps + 1; i += 1) {
+                            const angle = (2 * Math.PI * (i / nSteps)) % (2 * Math.PI);
+                            const x = centerXY[0] + Math.cos(-angle) * 200;
+                            const y = centerXY[1] + Math.sin(-angle) * 200;
+                            coordinates.push([x, y]);
+                          }
+                          const newFeature = feature.clone();
+                          newFeature.setGeometry(new Polygon([coordinates]));
+                          newFeature.setId(feature.getId()); // ID reset on clone
+                          newFeatures.push(newFeature);
+                        }
+                      });
+                      vectorSource.addFeatures(newFeatures);
+                      success(newFeatures);
+                    },
+                    () => {
+                      vectorSource.removeLoadedExtent(extent);
+                      failure();
+                    },
+                  );
+                },
               }),
             }),
           ],
