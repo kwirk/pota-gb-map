@@ -45,7 +45,7 @@ jobs:
           python wwff2geojson wwff_directory.csv > data/WWFF.json
       - name: Generate MOTA GeoJSON
         run: |
-          curl -o MOTA_G#1.json "https://www.cqgma.org/gmamap/load_mota.php?pfx=G{,M,W,I,J,U,D}"
+          curl -o MOTA_G#1.json -L "https://www.gma.rocks/gmamap/load_mota.php?pfx=G{,M,W,I,J,U,D}"
           python mota2geojson MOTA_G*.json > data/MOTA.json
       - name: Generate LLOTA GeoJSON
         run: |
