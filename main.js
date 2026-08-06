@@ -1332,16 +1332,13 @@ const map = new Map({
               minZoom: 6,
               style: polygonStyleFunctionFP,
               source: new VectorSource({
-                attributions: 'Boundaries:&nbsp;©&nbsp;Forestry&nbsp;Commission&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
-                format: new EsriJSON(),
+                attributions: 'Boundaries:&nbsp;©&nbsp;NatureScot&nbsp;(<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">OGL</a>).',
                 projection: projection27700,
+                format: GeoJSONObjectID27700,
                 loader: cachedFeaturesLoader('FP'),
                 strategy: cacheGridStrategy,
-                url: (extent) => 'https://services2.arcgis.com/mHXjwgl3OARRqqD4/arcgis/rest/services/National_Forest_Estate_Forest_Parks_GB/FeatureServer/0/query?'
-                  + 'f=json&returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry='
-                  + `{"xmin":${extent[0]},"xmax":${extent[2]},"ymin":${extent[1]},"ymax":${extent[3]},"spatialReference":{"wkid":27700}}&`
-                  + 'geometryType=esriGeometryEnvelope&inSR=27700&outFields=OBJECTID,FOREST_PAR&outSR=27700',
-              }),
+                url: (extent) => `https://ogc.nature.scot/geoserver/wfs?service=wfs&typeName=scottishforestry:National_Forest_Estate_Forest_Parks&version=2.0.0&request=GetFeature&outputFormat=application/json&srsname=EPSG:27700&bbox=${extent}`
+              })
             }),
             new VectorLayer({
               minZoom: 6,
