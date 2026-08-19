@@ -58,6 +58,8 @@ jobs:
         run: |
           curl -o TOTA.csv -L "https://wwtota.com/servis/generate_csv.php?ref=GBR&filter=all"
           python tota2geojson TOTA.csv > data/TOTA.json
+      - name: Generate PARC GeoJSON
+        run: python parc2geojson PARC.json > data/PARC.json
       - name: Restore cached WCALIST.ods
         id: cache-wca
         uses: actions/cache/restore@v6

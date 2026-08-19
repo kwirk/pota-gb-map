@@ -68,6 +68,7 @@ import MOTA from './data/MOTA.json?url';
 import WOTA from './data/WOTA.json?url';
 import LLOTA from './data/LLOTA.json?url';
 import TOTA from './data/TOTA.json?url';
+import PARC from './data/PARC.json?url';
 import FIFE_COAST_PATH from './data/fife_coast_path.json?url';
 
 import NATIONAL_FOREST from './data/national_forest.json?url';
@@ -1493,6 +1494,25 @@ const map = new Map({
                 projection: projection27700,
                 format: GeoJSON27700,
                 url: OSNI_TRIGPOINTS,
+              }),
+            }),
+          ],
+        }),
+        new LayerGroup({
+          title: `${legendDot('rgba(234, 255, 0, 0.5)')} Protected Area Radio Community`,
+          shortTitle: 'PARC',
+          combine: true,
+          visible: false,
+          minZoom: 6,
+          layers: [
+            new VectorLayer({
+              refUrl: 'https://parc-community.com/parks/',
+              style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(234, 255, 0, 1)'),
+              source: new VectorSource({
+                attributions: 'PARC&nbsp;references:&nbsp;<a href="https://parc-community.com/" target="_blank">PARC</a>.',
+                projection: projection27700,
+                format: GeoJSON27700,
+                url: PARC,
               }),
             }),
           ],
