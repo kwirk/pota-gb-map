@@ -16,7 +16,7 @@ export default {
         globPatterns: ['**/*.{js,css,html,svg}'],
         runtimeCaching: [
           {
-            urlPattern: /\/pota-gb-map\/[^_]+\.json$/i,
+            urlPattern: /\/pota-gb-map\/assets\/[^/]+\.json$/i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'local',
