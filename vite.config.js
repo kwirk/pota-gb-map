@@ -23,6 +23,13 @@ export default {
             },
           },
           {
+            urlPattern: /^https:\/\/ukcota\.com\/references\.json$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'cota',
+            },
+          },
+          {
             urlPattern: /^https:\/\/api.pota.app\/park\/grids\//i,
             handler: 'StaleWhileRevalidate',
             options: {

@@ -1517,6 +1517,47 @@ const map = new Map({
             }),
           ],
         }),
+        new VectorLayer({
+          title: `${legendDot('rgba(15, 110, 120, 1)')} Coastlines on the Air`,
+          shortTitle: 'COTA',
+          refUrl: 'https://ukcota.com/coastlines/',
+          minZoom: 6,
+          visible: false,
+          style: (feature, resolution) => pointStyleFunction(feature, resolution, 'rgba(15, 110, 120, 1)'),
+          source: new VectorSource({
+            attributions: 'COTA&nbsp;references:<a href="https://ukcota.com/" target="_blank">©&nbsp;Coastlines&nbsp;on&nbsp;the&nbsp;Air</a>',
+            strategy: bboxStrategy,
+            loader: function loader(extent, resolution, projection, success, failure) {
+              const vectorSource = this;
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', 'https://ukcota.com/references.json');
+              xhr.responseType = 'json';
+              function onError() {
+                vectorSource.removeLoadedExtent(extent);
+                failure();
+              }
+              xhr.onerror = onError;
+              xhr.onload = () => {
+                if (xhr.status === 200 && Array.isArray(xhr.response.references)) {
+                  const features = xhr.response.references.map((item) => {
+                    const feature = new Feature({
+                      geometry: new Point(fromLonLat([item.longitude, item.latitude], projection27700)),
+                      reference: item.reference,
+                      name: item.name,
+                    });
+                    feature.setId(item.reference);
+                    return feature;
+                  });
+                  vectorSource.addFeatures(features);
+                  success(features);
+                } else {
+                  onError();
+                }
+              };
+              xhr.send();
+            },
+          }),
+        }),
         new LayerGroup({
           title: `${legendDot('rgba(42, 42, 42, 0.5)')} Towers on the Air`,
           shortTitle: 'TOTA',
